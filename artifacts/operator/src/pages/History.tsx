@@ -55,27 +55,60 @@ function EodCard({ review }: { readonly review: EodReview }) {
                   <LayoutList className="h-4 w-4" /> Data
                 </span>
               </AccordionTrigger>
-              <AccordionContent className="pb-4">
-                <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm">
-                  {review.sleepHours != null && <Row label="Sleep" value={review.sleepHours + "h"} />}
-                  {review.sleepScore != null && <Row label="Sleep score" value={review.sleepScore + "/10"} />}
-                  {review.calories != null && <Row label="Calories" value={String(review.calories)} />}
-                  {review.proteinG != null && <Row label="Protein" value={review.proteinG + "g"} />}
-                  {review.carbsG != null && <Row label="Carbs" value={review.carbsG + "g"} />}
-                  {review.fatG != null && <Row label="Fat" value={review.fatG + "g"} />}
-                  {review.waterOz != null && <Row label="Water" value={review.waterOz + "oz"} />}
-                  {review.steps != null && <Row label="Steps" value={review.steps.toLocaleString()} />}
-                  {review.workoutCompleted != null && (
-                    <Row label="Workout" value={review.workoutCompleted ? ("Yes" + (review.workoutType ? " — " + review.workoutType : "")) : "No"} />
-                  )}
-                  {review.habitsCompleted && <Row label="Habits" value={review.habitsCompleted} />}
-                  {review.tasksPlanned != null && <Row label="Tasks planned" value={String(review.tasksPlanned)} />}
-                  {review.tasksCompleted != null && <Row label="Tasks done" value={String(review.tasksCompleted)} />}
-                  {review.tasksMissed != null && <Row label="Tasks missed" value={String(review.tasksMissed)} />}
-                  {review.calendarCommitments && <Row label="Calendar" value={review.calendarCommitments} span />}
-                  {review.healthNotes && <Row label="Health notes" value={review.healthNotes} span />}
-                  {review.reflection && <Row label="Reflection" value={review.reflection} span />}
-                </div>
+              <AccordionContent className="pb-4 space-y-4 text-sm">
+                {(review.sleepHours != null || review.sleepScore != null) && (
+                  <div>
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2">Sleep</p>
+                    <div className="grid grid-cols-2 gap-x-8 gap-y-1">
+                      {review.sleepHours != null && <Row label="Hours" value={review.sleepHours + "h"} />}
+                      {review.sleepScore != null && <Row label="Score" value={review.sleepScore + "/10"} />}
+                    </div>
+                  </div>
+                )}
+                {(review.calories != null || review.proteinG != null || review.carbsG != null || review.fatG != null || review.waterOz != null) && (
+                  <div>
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2">Nutrition</p>
+                    <div className="grid grid-cols-2 gap-x-8 gap-y-1">
+                      {review.calories != null && <Row label="Calories" value={String(review.calories)} />}
+                      {review.proteinG != null && <Row label="Protein" value={review.proteinG + "g"} />}
+                      {review.carbsG != null && <Row label="Carbs" value={review.carbsG + "g"} />}
+                      {review.fatG != null && <Row label="Fat" value={review.fatG + "g"} />}
+                      {review.waterOz != null && <Row label="Water" value={review.waterOz + "oz"} />}
+                    </div>
+                  </div>
+                )}
+                {(review.steps != null || review.workoutCompleted != null) && (
+                  <div>
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2">Activity</p>
+                    <div className="grid grid-cols-2 gap-x-8 gap-y-1">
+                      {review.steps != null && <Row label="Steps" value={review.steps.toLocaleString()} />}
+                      {review.workoutCompleted != null && (
+                        <Row label="Workout" value={review.workoutCompleted ? ("Yes" + (review.workoutType ? " — " + review.workoutType : "")) : "No"} />
+                      )}
+                    </div>
+                  </div>
+                )}
+                {(review.tasksPlanned != null || review.tasksCompleted != null || review.tasksMissed != null || review.habitsCompleted || review.calendarCommitments) && (
+                  <div>
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2">Tasks</p>
+                    <div className="grid grid-cols-2 gap-x-8 gap-y-1">
+                      {review.tasksPlanned != null && <Row label="Planned" value={String(review.tasksPlanned)} />}
+                      {review.tasksCompleted != null && <Row label="Done" value={String(review.tasksCompleted)} />}
+                      {review.tasksMissed != null && <Row label="Missed" value={String(review.tasksMissed)} />}
+                      {review.habitsCompleted && <Row label="Habits" value={review.habitsCompleted} span />}
+                      {review.calendarCommitments && <Row label="Calendar" value={review.calendarCommitments} span />}
+                    </div>
+                  </div>
+                )}
+                {(review.healthNotes || review.reflection) && (
+                  <div>
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2">Notes</p>
+                    <div className="space-y-1">
+                      {review.healthNotes && <Row label="Health" value={review.healthNotes} span />}
+                      {review.reflection && <Row label="Reflection" value={review.reflection} span />}
+                    </div>
+                  </div>
+                )}
               </AccordionContent>
             </AccordionItem>
           )}
