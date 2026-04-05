@@ -3,6 +3,7 @@ import { db, weeklyReviewsTable } from "@workspace/db";
 import { desc, eq } from "drizzle-orm";
 import { anthropic } from "@workspace/integrations-anthropic-ai";
 import { openai } from "@workspace/integrations-openai-ai-server";
+import { CreateWeeklyReviewBody } from "@workspace/api-zod";
 
 const router = Router();
 
@@ -26,6 +27,11 @@ router.get("/", async (req, res) => {
 
 // POST /api/weekly-reviews - create with AI analysis
 router.post("/", async (req, res) => {
+  const parsed = CreateWeeklyReviewBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.issues.map(i => i.message).join(", ") });
+    return;
+  }
   try {
     const {
       weekStartDate,
@@ -36,7 +42,7 @@ router.post("/", async (req, res) => {
       healthTrend,
       goalsNextWeek,
       existingCommitments,
-    } = req.body;
+    } = parsed.data;
 
     const userContext = `
 Week Starting: ${weekStartDate}

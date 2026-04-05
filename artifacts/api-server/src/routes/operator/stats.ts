@@ -3,6 +3,7 @@ import { db, dailyCheckinsTable, weeklyReviewsTable } from "@workspace/db";
 import { desc, sql } from "drizzle-orm";
 import { anthropic } from "@workspace/integrations-anthropic-ai";
 import { openai } from "@workspace/integrations-openai-ai-server";
+import { OperatorReflectBody, OperatorPlanBody } from "@workspace/api-zod";
 
 const router = Router();
 
@@ -110,24 +111,13 @@ router.get("/trends", async (req, res) => {
 
 // POST /api/operator/reflect — standalone Claude reflection
 router.post("/reflect", async (req, res) => {
+  const parsed = OperatorReflectBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.issues.map(i => i.message).join(", ") });
+    return;
+  }
   try {
-    const { notes, energyLevel, focusLevel, healthLevel, sleepQuality, mood, tasksCompleted, tasksMissed, habitsCompleted, symptomsNotes } = req.body as {
-      notes: string;
-      energyLevel?: number;
-      focusLevel?: number;
-      healthLevel?: number;
-      sleepQuality?: number;
-      mood?: number;
-      tasksCompleted?: string;
-      tasksMissed?: string;
-      habitsCompleted?: string;
-      symptomsNotes?: string;
-    };
-
-    if (!notes) {
-      res.status(400).json({ error: "notes is required" });
-      return;
-    }
+    const { notes, energyLevel, focusLevel, healthLevel, sleepQuality, mood, tasksCompleted, tasksMissed, habitsCompleted, symptomsNotes } = parsed.data;
 
     const metricsText = [
       energyLevel != null ? `Energy: ${energyLevel}/10` : null,
@@ -162,24 +152,13 @@ router.post("/reflect", async (req, res) => {
 
 // POST /api/operator/plan — standalone OpenAI tomorrow plan
 router.post("/plan", async (req, res) => {
+  const parsed = OperatorPlanBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.issues.map(i => i.message).join(", ") });
+    return;
+  }
   try {
-    const { notes, energyLevel, focusLevel, healthLevel, sleepQuality, mood, tasksCompleted, tasksMissed, goalsNextWeek, existingCommitments } = req.body as {
-      notes: string;
-      energyLevel?: number;
-      focusLevel?: number;
-      healthLevel?: number;
-      sleepQuality?: number;
-      mood?: number;
-      tasksCompleted?: string;
-      tasksMissed?: string;
-      goalsNextWeek?: string;
-      existingCommitments?: string;
-    };
-
-    if (!notes) {
-      res.status(400).json({ error: "notes is required" });
-      return;
-    }
+    const { notes, energyLevel, focusLevel, healthLevel, sleepQuality, mood, tasksCompleted, tasksMissed, goalsNextWeek, existingCommitments } = parsed.data;
 
     const contextText = [
       energyLevel != null ? `Energy: ${energyLevel}/10` : null,

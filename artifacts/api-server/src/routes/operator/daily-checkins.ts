@@ -3,6 +3,7 @@ import { db, dailyCheckinsTable } from "@workspace/db";
 import { desc, eq, sql } from "drizzle-orm";
 import { anthropic } from "@workspace/integrations-anthropic-ai";
 import { openai } from "@workspace/integrations-openai-ai-server";
+import { CreateDailyCheckinBody } from "@workspace/api-zod";
 
 const router = Router();
 
@@ -26,6 +27,11 @@ router.get("/", async (req, res) => {
 
 // POST /api/daily-checkins - create with AI analysis
 router.post("/", async (req, res) => {
+  const parsed = CreateDailyCheckinBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.issues.map(i => i.message).join(", ") });
+    return;
+  }
   try {
     const {
       date,
@@ -39,7 +45,7 @@ router.post("/", async (req, res) => {
       tasksMissed,
       habitsCompleted,
       symptomsNotes,
-    } = req.body;
+    } = parsed.data;
 
     // Build the user context string for AI prompts
     const userContext = `
