@@ -16,34 +16,35 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - **API codegen**: Orval (from OpenAPI spec)
 - **Build**: esbuild (CJS bundle)
 
-## Operator App — Architecture
+## Operator App Architecture (Task #4)
 
-Three data-first workflow pages:
-- **End-of-Day Review** (`/`) — log sleep, nutrition, activity, tasks, reflection; Claude insight (amber) + OpenAI tomorrow plan (blue)
-- **Pre-Day Plan** (`/pre-day`) — tasks + calendar + energy note; OpenAI daily structure + Claude pattern context
-- **Pre-Week Plan** (`/pre-week`) — goals + calendar + capacity; OpenAI weekly structure + Claude pattern context
-- **History** (`/history`) — three tabs (EOD Reviews, Day Plans, Week Plans) with accordion cards
+The Operator app uses a **user-defined trackables system** (not a fixed form). Key points:
 
-## DB Schema (lib/db)
+- **Daily Dashboard** (`/`) — dynamic form generated from user's configured trackables, grouped by section (category). Includes an end-of-day reflection section with 4 free-text fields. On submit, saves metric logs + creates AI analysis (daily-checkin).
+- **Customize Dashboard** (`/customize`) — CRUD for trackables. Each trackable has: name, type, category/section, unit, targetValue, aiContext (for AI), displayOrder. Supports up/down arrows for reordering within sections.
+- **History** (`/history`) — read-only view of past check-ins
+- **Navigation** — 3 items: Daily, History, Customize
 
-Active tables:
-- `end_of_day_reviews` — all EOD fields + ai_insight + ai_tomorrow
-- `pre_day_plans` — date, tasks_planned, calendar_commitments, energy_note, ai_plan, ai_context
-- `pre_week_plans` — week_start_date, goals, calendar_commitments, capacity_note, reflection, ai_plan, ai_context
+### Trackable Types
+- `number` — numeric input
+- `checkbox` — yes/no
+- `toggle` — on/off switch
+- `text` — free text area
+- `duration` — HH:MM two-field input
+- `scale` — slider 1–10
+- `dropdown` — dropdown from comma-separated options in targetValue
 
-Legacy tables (still in DB, unused): `daily_checkins`, `weekly_reviews`, `metrics`, `metric_logs`
+### Database Schema
+- `metrics` table — trackable definitions with: `unit`, `aiContext`, `displayOrder` (new in Task #4)
+- `metric_logs` table — daily logged values per trackable
+- `daily_checkins` table — daily check-in with AI outputs, includes 4 reflection fields: `reflectionFeltGood`, `reflectionFeltOff`, `reflectionGotInWay`, `reflectionAnythingUnusual` (new in Task #4)
 
-## API Routes
-
-- `GET/POST /api/eod-reviews` + `GET/PATCH/DELETE /api/eod-reviews/:id`
-- `GET/POST /api/pre-day-plans` + `GET/PATCH/DELETE /api/pre-day-plans/:id`
-- `GET/POST /api/pre-week-plans` + `GET/PATCH/DELETE /api/pre-week-plans/:id`
-- `GET /api/operator/stats`
-
-## AI
+### AI Context
+The AI (Claude + OpenAI) reads: trackable definitions (name, type, unit, aiContext), logged values, and reflection text to give personalized analysis.
 
 - Claude (`claude-sonnet-4-6`, max_tokens 8192) via `@workspace/integrations-anthropic-ai`
 - OpenAI (`gpt-4o`, max_completion_tokens 2048) via `@workspace/integrations-openai-ai-server`
+
 
 ## Key Commands
 

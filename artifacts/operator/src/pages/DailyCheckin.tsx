@@ -1,0 +1,467 @@
+import { useState, useEffect } from "react";
+import { format } from "date-fns";
+import { Link } from "wouter";
+import {
+  useListMetrics,
+  useListMetricLogs,
+  useSaveMetricLogs,
+  useCreateDailyCheckin,
+  getListDailyCheckinsQueryKey,
+  getListMetricLogsQueryKey,
+} from "@workspace/api-client-react";
+import type { Metric, DailyCheckin } from "@workspace/api-client-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { Slider } from "@/components/ui/slider";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Brain, Sparkles, AlertCircle, Loader2, SlidersHorizontal, Target } from "lucide-react";
+
+const CATEGORY_ICONS: Record<string, string> = {
+  Recovery: "💤",
+  Nutrition: "🥗",
+  Activity: "🏃",
+  Productivity: "🎯",
+  Custom: "⚡",
+};
+
+const CATEGORY_ORDER = ["Recovery", "Nutrition", "Activity", "Productivity", "Custom"];
+
+export default function DailyCheckinPage() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const today = format(new Date(), "yyyy-MM-dd");
+
+  const { data: metrics, isLoading: isLoadingMetrics } = useListMetrics();
+  const { data: existingLogs, isLoading: isLoadingLogs } = useListMetricLogs({ date: today });
+  const saveMetricLogs = useSaveMetricLogs();
+  const createCheckin = useCreateDailyCheckin();
+
+  const [values, setValues] = useState<Record<number, string>>({});
+  const [reflection, setReflection] = useState({
+    feltGood: "",
+    feltOff: "",
+    gotInWay: "",
+    anythingUnusual: "",
+  });
+  const [result, setResult] = useState<DailyCheckin | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Pre-populate with existing log values
+  useEffect(() => {
+    if (existingLogs && existingLogs.length > 0) {
+      const prefilled: Record<number, string> = {};
+      existingLogs.forEach((log) => {
+        prefilled[log.metricId] = log.value;
+      });
+      setValues(prefilled);
+    }
+  }, [existingLogs]);
+
+  if (isLoadingMetrics || isLoadingLogs) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (!metrics || metrics.length === 0) {
+    return (
+      <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold tracking-tight">Daily Dashboard</h1>
+          <p className="text-muted-foreground">Log your day and get structured feedback.</p>
+        </div>
+        <Card className="border-dashed bg-transparent shadow-none">
+          <CardContent className="flex flex-col items-center justify-center p-12 text-center">
+            <Target className="h-12 w-12 text-muted-foreground/50 mb-4" />
+            <p className="text-lg font-medium mb-1">Nothing to track yet</p>
+            <p className="text-muted-foreground mb-6">Set up your trackables to get started.</p>
+            <Link href="/customize">
+              <Button variant="outline" className="gap-2">
+                <SlidersHorizontal className="h-4 w-4" />
+                Customize Dashboard
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const grouped = CATEGORY_ORDER.reduce<Record<string, Metric[]>>((acc, cat) => {
+    const items = metrics
+      .filter((m) => m.category === cat)
+      .sort((a, b) => a.displayOrder - b.displayOrder || a.id - b.id);
+    if (items.length > 0) acc[cat] = items;
+    return acc;
+  }, {});
+
+  function setValue(metricId: number, val: string) {
+    setValues((prev) => ({ ...prev, [metricId]: val }));
+  }
+
+  function renderInput(m: Metric) {
+    const val = values[m.id] ?? "";
+    switch (m.type) {
+      case "number":
+        return (
+          <div className="flex items-center gap-2">
+            <Input
+              type="number"
+              value={val}
+              onChange={(e) => setValue(m.id, e.target.value)}
+              placeholder={m.targetValue ? `Target: ${m.targetValue}` : "0"}
+              className="w-28"
+            />
+            {m.unit && <span className="text-sm text-muted-foreground shrink-0">{m.unit}</span>}
+          </div>
+        );
+      case "checkbox":
+        return (
+          <Checkbox
+            checked={val === "true"}
+            onCheckedChange={(checked) => setValue(m.id, String(checked))}
+          />
+        );
+      case "toggle":
+        return (
+          <Switch
+            checked={val === "true"}
+            onCheckedChange={(checked) => setValue(m.id, String(checked))}
+          />
+        );
+      case "text":
+        return (
+          <Textarea
+            value={val}
+            onChange={(e) => setValue(m.id, e.target.value)}
+            placeholder="Enter value..."
+            className="min-h-[60px] w-full"
+          />
+        );
+      case "duration": {
+        const [hh, mm] = val ? val.split(":") : ["", ""];
+        return (
+          <div className="flex items-center gap-1">
+            <Input
+              type="number"
+              min={0}
+              max={23}
+              value={hh ?? ""}
+              onChange={(e) => {
+                const h = e.target.value.padStart(2, "0");
+                const m2 = mm?.padStart(2, "0") ?? "00";
+                setValue(m.id, `${h}:${m2}`);
+              }}
+              placeholder="HH"
+              className="w-16 text-center"
+            />
+            <span className="text-muted-foreground">:</span>
+            <Input
+              type="number"
+              min={0}
+              max={59}
+              value={mm ?? ""}
+              onChange={(e) => {
+                const h = hh?.padStart(2, "0") ?? "00";
+                const m2 = e.target.value.padStart(2, "0");
+                setValue(m.id, `${h}:${m2}`);
+              }}
+              placeholder="MM"
+              className="w-16 text-center"
+            />
+          </div>
+        );
+      }
+      case "scale": {
+        const numVal = val ? Number(val) : 5;
+        return (
+          <div className="flex items-center gap-3 w-48">
+            <Slider
+              value={[numVal]}
+              onValueChange={([v]) => setValue(m.id, String(v))}
+              min={1}
+              max={10}
+              step={1}
+              className="flex-1"
+            />
+            <span className="text-sm font-medium w-6 text-center tabular-nums">
+              {val || "5"}
+            </span>
+          </div>
+        );
+      }
+      case "dropdown":
+        return (
+          <Select value={val} onValueChange={(v) => setValue(m.id, v)}>
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Select..." />
+            </SelectTrigger>
+            <SelectContent>
+              {(m.targetValue ?? "").split(",").map((opt) => opt.trim()).filter(Boolean).map((opt) => (
+                <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        );
+      default:
+        return null;
+    }
+  }
+
+  async function handleSubmit() {
+    setIsSaving(true);
+    try {
+      // Save metric logs
+      const entries = Object.entries(values)
+        .filter(([, v]) => v !== "" && v !== undefined)
+        .map(([id, value]) => ({ metricId: Number(id), value }));
+
+      if (entries.length > 0) {
+        await saveMetricLogs.mutateAsync({
+          data: { date: today, entries },
+        });
+        queryClient.invalidateQueries({ queryKey: getListMetricLogsQueryKey({ date: today }) });
+      }
+
+      // Build summary notes from metric values
+      const metricSummary = entries
+        .map(({ metricId, value }) => {
+          const metric = metrics?.find((m) => m.id === metricId);
+          return metric ? `${metric.name}: ${value}${metric.unit ? ` ${metric.unit}` : ""}` : null;
+        })
+        .filter(Boolean)
+        .join(", ");
+
+      const finalNotes = metricSummary || "Daily check-in via dashboard";
+
+      // Map well-known metrics to checkin fields, fallback to 5
+      const getNumVal = (name: string) => {
+        const m = metrics?.find((x) => x.name.toLowerCase().includes(name));
+        if (!m) return 5;
+        const v = Number(values[m.id]);
+        return isNaN(v) ? 5 : Math.max(1, Math.min(10, v));
+      };
+
+      createCheckin.mutate(
+        {
+          data: {
+            date: today,
+            notes: finalNotes,
+            energyLevel: getNumVal("energy"),
+            focusLevel: getNumVal("focus"),
+            healthLevel: getNumVal("health"),
+            sleepQuality: getNumVal("sleep"),
+            mood: getNumVal("mood"),
+            tasksCompleted: entries
+              .filter(({ metricId }) => metrics?.find((x) => x.id === metricId)?.category === "Productivity")
+              .map(({ metricId, value }) => {
+                const m = metrics?.find((x) => x.id === metricId);
+                return `${m?.name}: ${value}`;
+              })
+              .join(", ") || "Logged via dashboard",
+            tasksMissed: "",
+            habitsCompleted: null,
+            symptomsNotes: null,
+            reflectionFeltGood: reflection.feltGood.trim() || null,
+            reflectionFeltOff: reflection.feltOff.trim() || null,
+            reflectionGotInWay: reflection.gotInWay.trim() || null,
+            reflectionAnythingUnusual: reflection.anythingUnusual.trim() || null,
+          },
+        },
+        {
+          onSuccess: (data) => {
+            setResult(data);
+            toast({ title: "Check-in logged successfully" });
+            queryClient.invalidateQueries({ queryKey: getListDailyCheckinsQueryKey() });
+          },
+          onError: () => {
+            toast({ variant: "destructive", title: "Failed to generate AI insights" });
+          },
+        }
+      );
+    } catch {
+      toast({ variant: "destructive", title: "Failed to save logs" });
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  if (result) {
+    return (
+      <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold tracking-tight">Daily Dashboard</h1>
+          <p className="text-muted-foreground">Today's insights are ready.</p>
+        </div>
+        <div className="flex gap-4 mb-8">
+          <Button onClick={() => setResult(null)} variant="outline">Back to Form</Button>
+        </div>
+
+        <Card className="bg-primary/5 border-primary/20">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-primary">
+              <Sparkles className="h-5 w-5" />
+              Combined Advice
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="whitespace-pre-wrap leading-relaxed text-sm">
+            {result.combinedAdvice || "No advice generated."}
+          </CardContent>
+        </Card>
+
+        <div className="grid md:grid-cols-2 gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Brain className="h-5 w-5 text-muted-foreground" />
+                Reflection
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="whitespace-pre-wrap text-sm text-muted-foreground">
+              {result.claudeReflection || "No reflection available."}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <AlertCircle className="h-5 w-5 text-muted-foreground" />
+                Tomorrow's Plan
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="whitespace-pre-wrap text-sm text-muted-foreground">
+              {result.openaiPlan || "No plan available."}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="flex items-start justify-between">
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold tracking-tight">Daily Dashboard</h1>
+          <p className="text-muted-foreground">
+            {format(new Date(), "EEEE, MMMM d, yyyy")} — Log your metrics and get AI insights.
+          </p>
+        </div>
+        <Link href="/customize">
+          <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground">
+            <SlidersHorizontal className="h-4 w-4" />
+            Customize
+          </Button>
+        </Link>
+      </div>
+
+      <div className="space-y-6">
+        {Object.entries(grouped).map(([category, categoryMetrics]) => (
+          <Card key={category}>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <span>{CATEGORY_ICONS[category]}</span>
+                {category}
+                <span className="text-muted-foreground font-normal text-sm ml-1">
+                  ({categoryMetrics.length})
+                </span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {categoryMetrics.map((m) => (
+                <div
+                  key={m.id}
+                  className={`flex gap-4 ${m.type === "text" ? "flex-col" : "items-center justify-between"}`}
+                >
+                  <div className={`flex items-center gap-2 ${m.type === "text" ? "" : "min-w-0"}`}>
+                    <Label className="font-medium text-sm">{m.name}</Label>
+                    {m.targetValue && m.type !== "dropdown" && (
+                      <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-muted-foreground">
+                        target: {m.targetValue}{m.unit ? ` ${m.unit}` : ""}
+                      </Badge>
+                    )}
+                  </div>
+                  <div className={m.type === "text" ? "w-full" : "shrink-0"}>
+                    {renderInput(m)}
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        ))}
+
+        {/* End-of-Day Reflection */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">🔍 End-of-Day Reflection</CardTitle>
+            <CardDescription>Optional — helps AI give more personal insights</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium">What felt good today?</Label>
+              <Textarea
+                value={reflection.feltGood}
+                onChange={(e) => setReflection((r) => ({ ...r, feltGood: e.target.value }))}
+                placeholder="What worked, what felt natural, what you're proud of..."
+                className="min-h-[60px]"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium">What felt off?</Label>
+              <Textarea
+                value={reflection.feltOff}
+                onChange={(e) => setReflection((r) => ({ ...r, feltOff: e.target.value }))}
+                placeholder="Energy dips, friction, things that felt harder than they should..."
+                className="min-h-[60px]"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium">What got in the way?</Label>
+              <Textarea
+                value={reflection.gotInWay}
+                onChange={(e) => setReflection((r) => ({ ...r, gotInWay: e.target.value }))}
+                placeholder="Interruptions, unexpected events, obstacles..."
+                className="min-h-[60px]"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium">Anything unusual?</Label>
+              <Textarea
+                value={reflection.anythingUnusual}
+                onChange={(e) => setReflection((r) => ({ ...r, anythingUnusual: e.target.value }))}
+                placeholder="Anything out of the ordinary that affected today..."
+                className="min-h-[60px]"
+              />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Button
+        onClick={handleSubmit}
+        disabled={isSaving || createCheckin.isPending}
+        className="w-full md:w-auto"
+        size="lg"
+      >
+        {(isSaving || createCheckin.isPending) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+        Save & Analyze
+      </Button>
+    </div>
+  );
+}

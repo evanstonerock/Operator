@@ -4,10 +4,9 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import { AppLayout } from "@/components/layout/AppLayout";
-import EndOfDayReview from "@/pages/EndOfDayReview";
-import PreDayPlan from "@/pages/PreDayPlan";
-import PreWeekPlan from "@/pages/PreWeekPlan";
+import DailyCheckin from "@/pages/DailyCheckin";
 import History from "@/pages/History";
+import CustomizeDashboard from "@/pages/CustomizeDashboard";
 
 const queryClient = new QueryClient();
 
@@ -15,10 +14,9 @@ function Router() {
   return (
     <AppLayout>
       <Switch>
-        <Route path="/" component={EndOfDayReview} />
-        <Route path="/pre-day" component={PreDayPlan} />
-        <Route path="/pre-week" component={PreWeekPlan} />
+        <Route path="/" component={DailyCheckin} />
         <Route path="/history" component={History} />
+        <Route path="/customize" component={CustomizeDashboard} />
         <Route component={NotFound} />
       </Switch>
     </AppLayout>
