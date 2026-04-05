@@ -5,22 +5,6 @@ import { eq } from "drizzle-orm";
 const router = Router();
 
 const VALID_TYPES = ["number", "checkbox", "text", "duration", "scale"];
-const VALID_CATEGORIES = [
-  "Recovery",
-  "Health",
-  "Fitness",
-  "Nutrition",
-  "Work",
-  "Study",
-  "Finance",
-  "Social",
-  "Skill",
-  "Art",
-  "Morning",
-  "Day",
-  "Evening",
-  "Custom",
-];
 
 // GET /api/metrics
 router.get("/", async (req, res) => {
@@ -59,11 +43,6 @@ router.post("/", async (req, res) => {
 
   if (!VALID_TYPES.includes(type)) {
     res.status(400).json({ error: `type must be one of: ${VALID_TYPES.join(", ")}` });
-    return;
-  }
-
-  if (!VALID_CATEGORIES.includes(category)) {
-    res.status(400).json({ error: `category must be one of: ${VALID_CATEGORIES.join(", ")}` });
     return;
   }
 
@@ -108,11 +87,6 @@ router.patch("/:id", async (req, res) => {
 
   if (type && !VALID_TYPES.includes(type)) {
     res.status(400).json({ error: `type must be one of: ${VALID_TYPES.join(", ")}` });
-    return;
-  }
-
-  if (category && !VALID_CATEGORIES.includes(category)) {
-    res.status(400).json({ error: `category must be one of: ${VALID_CATEGORIES.join(", ")}` });
     return;
   }
 

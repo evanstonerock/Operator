@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   useListMetrics,
   useCreateMetric,
@@ -53,7 +53,7 @@ import {
 
 const METRIC_TYPES = ["number", "checkbox", "text", "duration", "scale"] as const;
 
-const CATEGORIES = [
+const PRESET_CATEGORIES = [
   "Recovery",
   "Health",
   "Fitness",
@@ -67,7 +67,6 @@ const CATEGORIES = [
   "Morning",
   "Day",
   "Evening",
-  "Custom",
 ] as const;
 
 const TYPE_COLORS: Record<string, string> = {
@@ -92,7 +91,6 @@ const CATEGORY_COLORS: Record<string, string> = {
   Morning: "bg-amber-500/10 text-amber-400",
   Day: "bg-yellow-500/10 text-yellow-400",
   Evening: "bg-purple-500/10 text-purple-400",
-  Custom: "bg-gray-500/10 text-gray-400",
 };
 
 const CATEGORY_ICONS: Record<string, string> = {
@@ -109,7 +107,6 @@ const CATEGORY_ICONS: Record<string, string> = {
   Morning: "🌅",
   Day: "☀️",
   Evening: "🌙",
-  Custom: "⚡",
 };
 
 const TYPE_DESCRIPTIONS: Record<string, string> = {
@@ -124,6 +121,7 @@ type MetricForm = {
   name: string;
   type: string;
   category: string;
+  customCategory: string;
   unit: string;
   targetValue: string;
   aiContext: string;
@@ -133,10 +131,19 @@ const EMPTY_FORM: MetricForm = {
   name: "",
   type: "number",
   category: "Work",
+  customCategory: "",
   unit: "",
   targetValue: "",
   aiContext: "",
 };
+
+function getCategoryColor(category: string) {
+  return CATEGORY_COLORS[category] ?? "bg-gray-500/10 text-gray-300";
+}
+
+function getCategoryIcon(category: string) {
+  return CATEGORY_ICONS[category] ?? "🏷️";
+}
 
 export default function CustomizeDashboard() {
   const { toast } = useToast();
@@ -155,6 +162,13 @@ export default function CustomizeDashboard() {
   const invalidate = () =>
     queryClient.invalidateQueries({ queryKey: getListMetricsQueryKey() });
 
+  const orderedCategories = useMemo(() => {
+    const metricCategories = Array.from(new Set((metrics ?? []).map((m) => m.category)));
+    const preset = [...PRESET_CATEGORIES].filter((c) => metricCategories.includes(c));
+    const custom = metricCategories.filter((c) => !PRESET_CATEGORIES.includes(c as never)).sort();
+    return [...preset, ...custom];
+  }, [metrics]);
+
   function openCreate() {
     setEditingMetric(null);
     setForm(EMPTY_FORM);
@@ -162,16 +176,24 @@ export default function CustomizeDashboard() {
   }
 
   function openEdit(m: Metric) {
+    const isPreset = PRESET_CATEGORIES.includes(m.category as never);
+
     setEditingMetric(m);
     setForm({
       name: m.name,
       type: m.type,
-      category: m.category,
+      category: isPreset ? m.category : "Custom",
+      customCategory: isPreset ? "" : m.category,
       unit: m.unit ?? "",
       targetValue: m.targetValue ?? "",
       aiContext: m.aiContext ?? "",
     });
     setDialogOpen(true);
+  }
+
+  function getFinalCategory() {
+    if (form.category !== "Custom") return form.category;
+    return form.customCategory.trim();
   }
 
   function handleSave() {
@@ -180,10 +202,17 @@ export default function CustomizeDashboard() {
       return;
     }
 
+    const finalCategory = getFinalCategory();
+
+    if (!finalCategory) {
+      toast({ variant: "destructive", title: "Custom label is required" });
+      return;
+    }
+
     const payload = {
       name: form.name.trim(),
       type: form.type as CreateMetricBody["type"],
-      category: form.category as CreateMetricBody["category"],
+      category: finalCategory,
       unit: form.unit.trim() || null,
       targetValue: form.targetValue.trim() || null,
       aiContext: form.aiContext.trim() || null,
@@ -252,28 +281,6 @@ export default function CustomizeDashboard() {
         updateMetric.mutateAsync({ id: itemA.id, data: { displayOrder: itemB.displayOrder } }),
         updateMetric.mutateAsync({ id: itemB.id, data: { displayOrder: itemA.displayOrder } }),
       ]);
-
-      if (itemA.displayOrder === itemB.displayOrder) {
-        const allItems = [...(metrics ?? [])].sort(
-          (a, b) => a.displayOrder - b.displayOrder || a.id - b.id,
-        );
-        const updates = allItems.map((m, i) => ({ id: m.id, displayOrder: i * 10 }));
-        const aUpdate = updates.find((u) => u.id === itemA.id);
-        const bUpdate = updates.find((u) => u.id === itemB.id);
-
-        if (aUpdate && bUpdate) {
-          [aUpdate.displayOrder, bUpdate.displayOrder] = [
-            bUpdate.displayOrder,
-            aUpdate.displayOrder,
-          ];
-          await Promise.all(
-            updates.map((u) =>
-              updateMetric.mutateAsync({ id: u.id, data: { displayOrder: u.displayOrder } }),
-            ),
-          );
-        }
-      }
-
       invalidate();
     } catch {
       toast({ variant: "destructive", title: "Failed to reorder" });
@@ -282,12 +289,12 @@ export default function CustomizeDashboard() {
     }
   }
 
-  const grouped = CATEGORIES.reduce<Record<string, Metric[]>>((acc, cat) => {
+  const grouped = orderedCategories.reduce<Record<string, Metric[]>>((acc, cat) => {
     acc[cat] = (metrics ?? [])
       .filter((m) => m.category === cat)
       .sort((a, b) => a.displayOrder - b.displayOrder || a.id - b.id);
     return acc;
-  }, {} as Record<string, Metric[]>);
+  }, {});
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -319,8 +326,7 @@ export default function CustomizeDashboard() {
             <Target className="h-12 w-12 text-muted-foreground/50 mb-4" />
             <p className="text-lg font-medium mb-1">Nothing tracked yet</p>
             <p className="text-muted-foreground mb-6 max-w-sm">
-              Add trackables to define what matters to you. Your daily dashboard will be
-              built from these.
+              Add trackables to define what matters to you. Your daily dashboard will be built from these.
             </p>
             <Button onClick={openCreate} className="gap-2">
               <Plus className="h-4 w-4" />
@@ -330,7 +336,7 @@ export default function CustomizeDashboard() {
         </Card>
       ) : (
         <div className="space-y-6">
-          {CATEGORIES.map((cat) => {
+          {orderedCategories.map((cat) => {
             const items = grouped[cat];
             if (!items || items.length === 0) return null;
 
@@ -338,10 +344,8 @@ export default function CustomizeDashboard() {
               <Card key={cat}>
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base flex items-center gap-2">
-                    <span>{CATEGORY_ICONS[cat]}</span>
-                    <span
-                      className={`px-2 py-0.5 rounded-md text-xs font-medium ${CATEGORY_COLORS[cat]}`}
-                    >
+                    <span>{getCategoryIcon(cat)}</span>
+                    <span className={`px-2 py-0.5 rounded-md text-xs font-medium ${getCategoryColor(cat)}`}>
                       {cat}
                     </span>
                     <span className="text-muted-foreground font-normal text-sm">
@@ -488,15 +492,28 @@ export default function CustomizeDashboard() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {CATEGORIES.map((c) => (
+                    {PRESET_CATEGORIES.map((c) => (
                       <SelectItem key={c} value={c}>
-                        {CATEGORY_ICONS[c]} {c}
+                        {getCategoryIcon(c)} {c}
                       </SelectItem>
                     ))}
+                    <SelectItem value="Custom">🏷️ Custom</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
+
+            {form.category === "Custom" && (
+              <div className="space-y-1.5">
+                <Label htmlFor="custom-category">Custom Label</Label>
+                <Input
+                  id="custom-category"
+                  placeholder="e.g. Reading, Nicotine, Appointments"
+                  value={form.customCategory}
+                  onChange={(e) => setForm((f) => ({ ...f, customCategory: e.target.value }))}
+                />
+              </div>
+            )}
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
@@ -532,8 +549,7 @@ export default function CustomizeDashboard() {
                 className="min-h-[64px] text-sm"
               />
               <p className="text-[11px] text-muted-foreground">
-                Helps AI understand what this habit means to you and give more relevant
-                insights.
+                Helps AI understand what this habit means to you and give more relevant insights.
               </p>
             </div>
           </div>
@@ -557,8 +573,7 @@ export default function CustomizeDashboard() {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete trackable?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete the trackable and all its logged history. This
-              action cannot be undone.
+              This will permanently delete the trackable and all its logged history. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

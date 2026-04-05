@@ -10,28 +10,11 @@ export const metricTypeEnum = pgEnum("metric_type", [
   "scale",
 ]);
 
-export const metricCategoryEnum = pgEnum("metric_category", [
-  "Recovery",
-  "Health",
-  "Fitness",
-  "Nutrition",
-  "Work",
-  "Study",
-  "Finance",
-  "Social",
-  "Skill",
-  "Art",
-  "Morning",
-  "Day",
-  "Evening",
-  "Custom",
-]);
-
 export const metricsTable = pgTable("metrics", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   type: metricTypeEnum("type").notNull(),
-  category: metricCategoryEnum("category").notNull(),
+  category: text("category").notNull(),
   unit: text("unit"),
   targetValue: text("target_value"),
   aiContext: text("ai_context"),
