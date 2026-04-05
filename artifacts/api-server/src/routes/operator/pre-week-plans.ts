@@ -3,7 +3,7 @@ import { db, preWeekPlansTable, endOfDayReviewsTable } from "@workspace/db";
 import { desc, eq } from "drizzle-orm";
 import { anthropic } from "@workspace/integrations-anthropic-ai";
 import { openai } from "@workspace/integrations-openai-ai-server";
-import { CreatePreWeekPlanBody } from "@workspace/api-zod";
+import { CreatePreWeekPlanBody, UpdatePreWeekPlanBody } from "@workspace/api-zod";
 
 const router = Router();
 
@@ -179,6 +179,11 @@ router.get("/:id", async (req, res) => {
 
 // PATCH /api/pre-week-plans/:id
 router.patch("/:id", async (req, res) => {
+  const parsed = UpdatePreWeekPlanBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.issues.map(i => i.message).join(", ") });
+    return;
+  }
   try {
     const id = Number(req.params.id);
     const [existing] = await db.select().from(preWeekPlansTable).where(eq(preWeekPlansTable.id, id));
@@ -186,13 +191,13 @@ router.patch("/:id", async (req, res) => {
       res.status(404).json({ error: "Pre-week plan not found" });
       return;
     }
-    const body = req.body as Record<string, unknown>;
+    const data = parsed.data;
     const updates: Partial<typeof preWeekPlansTable.$inferInsert> = {};
-    if (body.weekStartDate !== undefined) updates.weekStartDate = String(body.weekStartDate);
-    if (body.goals !== undefined) updates.goals = body.goals != null ? String(body.goals) : null;
-    if (body.calendarCommitments !== undefined) updates.calendarCommitments = body.calendarCommitments != null ? String(body.calendarCommitments) : null;
-    if (body.capacityNote !== undefined) updates.capacityNote = body.capacityNote != null ? String(body.capacityNote) : null;
-    if (body.reflection !== undefined) updates.reflection = body.reflection != null ? String(body.reflection) : null;
+    if (data.weekStartDate !== undefined) updates.weekStartDate = data.weekStartDate;
+    if (data.goals !== undefined) updates.goals = data.goals ?? null;
+    if (data.calendarCommitments !== undefined) updates.calendarCommitments = data.calendarCommitments ?? null;
+    if (data.capacityNote !== undefined) updates.capacityNote = data.capacityNote ?? null;
+    if (data.reflection !== undefined) updates.reflection = data.reflection ?? null;
     const [updated] = await db.update(preWeekPlansTable).set(updates).where(eq(preWeekPlansTable.id, id)).returning();
     res.json(formatPlan(updated));
   } catch (err) {

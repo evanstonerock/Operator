@@ -3,7 +3,7 @@ import { db, preDayPlansTable, endOfDayReviewsTable } from "@workspace/db";
 import { desc, eq } from "drizzle-orm";
 import { anthropic } from "@workspace/integrations-anthropic-ai";
 import { openai } from "@workspace/integrations-openai-ai-server";
-import { CreatePreDayPlanBody } from "@workspace/api-zod";
+import { CreatePreDayPlanBody, UpdatePreDayPlanBody } from "@workspace/api-zod";
 
 const router = Router();
 
@@ -177,6 +177,11 @@ router.get("/:id", async (req, res) => {
 
 // PATCH /api/pre-day-plans/:id
 router.patch("/:id", async (req, res) => {
+  const parsed = UpdatePreDayPlanBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.issues.map(i => i.message).join(", ") });
+    return;
+  }
   try {
     const id = Number(req.params.id);
     const [existing] = await db.select().from(preDayPlansTable).where(eq(preDayPlansTable.id, id));
@@ -184,12 +189,12 @@ router.patch("/:id", async (req, res) => {
       res.status(404).json({ error: "Pre-day plan not found" });
       return;
     }
-    const body = req.body as Record<string, unknown>;
+    const data = parsed.data;
     const updates: Partial<typeof preDayPlansTable.$inferInsert> = {};
-    if (body.date !== undefined) updates.date = String(body.date);
-    if (body.tasksPlanned !== undefined) updates.tasksPlanned = body.tasksPlanned != null ? String(body.tasksPlanned) : null;
-    if (body.calendarCommitments !== undefined) updates.calendarCommitments = body.calendarCommitments != null ? String(body.calendarCommitments) : null;
-    if (body.energyNote !== undefined) updates.energyNote = body.energyNote != null ? String(body.energyNote) : null;
+    if (data.date !== undefined) updates.date = data.date;
+    if (data.tasksPlanned !== undefined) updates.tasksPlanned = data.tasksPlanned ?? null;
+    if (data.calendarCommitments !== undefined) updates.calendarCommitments = data.calendarCommitments ?? null;
+    if (data.energyNote !== undefined) updates.energyNote = data.energyNote ?? null;
     const [updated] = await db.update(preDayPlansTable).set(updates).where(eq(preDayPlansTable.id, id)).returning();
     res.json(formatPlan(updated));
   } catch (err) {
