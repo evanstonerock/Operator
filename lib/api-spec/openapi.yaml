@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
-  version: 0.1.0
+  version: 0.2.0
   description: API specification for Operator - personal life OS
 servers:
   - url: /api
@@ -10,16 +10,14 @@ servers:
 tags:
   - name: health
     description: Health operations
-  - name: daily-checkins
-    description: Daily check-in operations
-  - name: weekly-reviews
-    description: Weekly review operations
-  - name: operator-ai
-    description: AI analysis and planning operations
-  - name: metrics
-    description: User-defined metrics management
-  - name: metric-logs
-    description: Daily metric log entries
+  - name: eod-reviews
+    description: End-of-day review operations
+  - name: pre-day-plans
+    description: Pre-day plan operations
+  - name: pre-week-plans
+    description: Pre-week plan operations
+  - name: operator
+    description: Operator stats
 paths:
   /healthz:
     get:
@@ -35,11 +33,11 @@ paths:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
 
-  /daily-checkins:
+  /eod-reviews:
     get:
-      operationId: listDailyCheckins
-      tags: [daily-checkins]
-      summary: List all daily check-ins
+      operationId: listEodReviews
+      tags: [eod-reviews]
+      summary: List all end-of-day reviews
       parameters:
         - name: limit
           in: query
@@ -53,30 +51,30 @@ paths:
             default: 0
       responses:
         "200":
-          description: List of daily check-ins
+          description: List of end-of-day reviews
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/DailyCheckin"
+                  $ref: "#/components/schemas/EodReview"
     post:
-      operationId: createDailyCheckin
-      tags: [daily-checkins]
-      summary: Create a daily check-in with AI analysis
+      operationId: createEodReview
+      tags: [eod-reviews]
+      summary: Create an end-of-day review with AI analysis
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateDailyCheckinBody"
+              $ref: "#/components/schemas/CreateEodReviewBody"
       responses:
         "201":
-          description: Created daily check-in with AI outputs
+          description: Created end-of-day review with AI outputs
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/DailyCheckin"
+                $ref: "#/components/schemas/EodReview"
         "400":
           description: Invalid input
           content:
@@ -84,11 +82,11 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
-  /daily-checkins/{id}:
+  /eod-reviews/{id}:
     get:
-      operationId: getDailyCheckin
-      tags: [daily-checkins]
-      summary: Get a specific daily check-in
+      operationId: getEodReview
+      tags: [eod-reviews]
+      summary: Get a specific end-of-day review
       parameters:
         - name: id
           in: path
@@ -97,11 +95,11 @@ paths:
             type: integer
       responses:
         "200":
-          description: Daily check-in
+          description: End-of-day review
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/DailyCheckin"
+                $ref: "#/components/schemas/EodReview"
         "404":
           description: Not found
           content:
@@ -109,9 +107,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
     delete:
-      operationId: deleteDailyCheckin
-      tags: [daily-checkins]
-      summary: Delete a daily check-in
+      operationId: deleteEodReview
+      tags: [eod-reviews]
+      summary: Delete an end-of-day review
       parameters:
         - name: id
           in: path
@@ -122,11 +120,98 @@ paths:
         "204":
           description: Deleted
 
-  /weekly-reviews:
+  /pre-day-plans:
     get:
-      operationId: listWeeklyReviews
-      tags: [weekly-reviews]
-      summary: List all weekly reviews
+      operationId: listPreDayPlans
+      tags: [pre-day-plans]
+      summary: List all pre-day plans
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: List of pre-day plans
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PreDayPlan"
+    post:
+      operationId: createPreDayPlan
+      tags: [pre-day-plans]
+      summary: Create a pre-day plan with AI output
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePreDayPlanBody"
+      responses:
+        "201":
+          description: Created pre-day plan with AI outputs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PreDayPlan"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /pre-day-plans/{id}:
+    get:
+      operationId: getPreDayPlan
+      tags: [pre-day-plans]
+      summary: Get a specific pre-day plan
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Pre-day plan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PreDayPlan"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deletePreDayPlan
+      tags: [pre-day-plans]
+      summary: Delete a pre-day plan
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /pre-week-plans:
+    get:
+      operationId: listPreWeekPlans
+      tags: [pre-week-plans]
+      summary: List all pre-week plans
       parameters:
         - name: limit
           in: query
@@ -140,30 +225,30 @@ paths:
             default: 0
       responses:
         "200":
-          description: List of weekly reviews
+          description: List of pre-week plans
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/WeeklyReview"
+                  $ref: "#/components/schemas/PreWeekPlan"
     post:
-      operationId: createWeeklyReview
-      tags: [weekly-reviews]
-      summary: Create a weekly review with AI analysis
+      operationId: createPreWeekPlan
+      tags: [pre-week-plans]
+      summary: Create a pre-week plan with AI output
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateWeeklyReviewBody"
+              $ref: "#/components/schemas/CreatePreWeekPlanBody"
       responses:
         "201":
-          description: Created weekly review with AI outputs
+          description: Created pre-week plan with AI outputs
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/WeeklyReview"
+                $ref: "#/components/schemas/PreWeekPlan"
         "400":
           description: Invalid input
           content:
@@ -171,11 +256,11 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
-  /weekly-reviews/{id}:
+  /pre-week-plans/{id}:
     get:
-      operationId: getWeeklyReview
-      tags: [weekly-reviews]
-      summary: Get a specific weekly review
+      operationId: getPreWeekPlan
+      tags: [pre-week-plans]
+      summary: Get a specific pre-week plan
       parameters:
         - name: id
           in: path
@@ -184,11 +269,11 @@ paths:
             type: integer
       responses:
         "200":
-          description: Weekly review
+          description: Pre-week plan
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/WeeklyReview"
+                $ref: "#/components/schemas/PreWeekPlan"
         "404":
           description: Not found
           content:
@@ -196,9 +281,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
     delete:
-      operationId: deleteWeeklyReview
-      tags: [weekly-reviews]
-      summary: Delete a weekly review
+      operationId: deletePreWeekPlan
+      tags: [pre-week-plans]
+      summary: Delete a pre-week plan
       parameters:
         - name: id
           in: path
@@ -208,145 +293,11 @@ paths:
       responses:
         "204":
           description: Deleted
-
-  /metrics:
-    get:
-      operationId: listMetrics
-      tags: [metrics]
-      summary: List all active metrics
-      responses:
-        "200":
-          description: List of metrics
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Metric"
-    post:
-      operationId: createMetric
-      tags: [metrics]
-      summary: Create a new metric
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/CreateMetricBody"
-      responses:
-        "201":
-          description: Created metric
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Metric"
-        "400":
-          description: Invalid input
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-
-  /metrics/{id}:
-    patch:
-      operationId: updateMetric
-      tags: [metrics]
-      summary: Update a metric
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/UpdateMetricBody"
-      responses:
-        "200":
-          description: Updated metric
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Metric"
-        "404":
-          description: Not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-    delete:
-      operationId: deleteMetric
-      tags: [metrics]
-      summary: Delete a metric
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      responses:
-        "204":
-          description: Deleted
-
-  /metric-logs:
-    get:
-      operationId: listMetricLogs
-      tags: [metric-logs]
-      summary: Get metric logs for a specific date
-      parameters:
-        - name: date
-          in: query
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: List of metric log entries with metric info
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/MetricLogEntry"
-        "400":
-          description: Missing date param
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-    post:
-      operationId: saveMetricLogs
-      tags: [metric-logs]
-      summary: Save metric log entries for a date (upsert)
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/SaveMetricLogsBody"
-      responses:
-        "201":
-          description: Saved log entries
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/MetricLog"
-        "400":
-          description: Invalid input
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
 
   /operator/stats:
     get:
       operationId: getOperatorStats
-      tags: [operator-ai]
+      tags: [operator]
       summary: Get overall stats summary
       responses:
         "200":
@@ -355,71 +306,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/OperatorStats"
-
-  /operator/trends:
-    get:
-      operationId: getOperatorTrends
-      tags: [operator-ai]
-      summary: Get recent metric trends (last 7 check-ins)
-      responses:
-        "200":
-          description: Trend data
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/TrendPoint"
-
-  /operator/reflect:
-    post:
-      operationId: operatorReflect
-      tags: [operator-ai]
-      summary: Get a Claude reflection for a set of notes/metrics
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ReflectRequest"
-      responses:
-        "200":
-          description: Claude reflection text
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ReflectResponse"
-        "500":
-          description: AI error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-
-  /operator/plan:
-    post:
-      operationId: operatorPlan
-      tags: [operator-ai]
-      summary: Get an OpenAI tomorrow plan for a set of notes/metrics
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/PlanRequest"
-      responses:
-        "200":
-          description: OpenAI plan text
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/PlanResponse"
-        "500":
-          description: AI error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
 
 components:
   schemas:
@@ -439,441 +325,232 @@ components:
       required:
         - error
 
-    DailyCheckin:
+    EodReview:
       type: object
       properties:
         id:
           type: integer
         date:
           type: string
-        notes:
-          type: string
-        energyLevel:
-          type: integer
-        focusLevel:
-          type: integer
-        healthLevel:
-          type: integer
-        sleepQuality:
-          type: integer
-        mood:
-          type: integer
-        tasksCompleted:
-          type: string
-        tasksMissed:
-          type: string
+        sleepHours:
+          type: ["number", "null"]
+        sleepScore:
+          type: ["integer", "null"]
+        calories:
+          type: ["integer", "null"]
+        proteinG:
+          type: ["number", "null"]
+        carbsG:
+          type: ["number", "null"]
+        fatG:
+          type: ["number", "null"]
+        waterOz:
+          type: ["number", "null"]
+        steps:
+          type: ["integer", "null"]
+        workoutCompleted:
+          type: ["boolean", "null"]
+        workoutType:
+          type: ["string", "null"]
         habitsCompleted:
           type: ["string", "null"]
-        symptomsNotes:
+        tasksPlanned:
+          type: ["integer", "null"]
+        tasksCompleted:
+          type: ["integer", "null"]
+        tasksMissed:
+          type: ["integer", "null"]
+        calendarCommitments:
           type: ["string", "null"]
-        claudeReflection:
+        healthNotes:
           type: ["string", "null"]
-        openaiPlan:
+        reflection:
           type: ["string", "null"]
-        combinedAdvice:
+        aiInsight:
+          type: ["string", "null"]
+        aiTomorrow:
           type: ["string", "null"]
         createdAt:
           type: string
       required:
         - id
         - date
-        - notes
-        - energyLevel
-        - focusLevel
-        - healthLevel
-        - sleepQuality
-        - mood
-        - tasksCompleted
-        - tasksMissed
+        - sleepHours
+        - sleepScore
+        - calories
+        - proteinG
+        - carbsG
+        - fatG
+        - waterOz
+        - steps
+        - workoutCompleted
+        - workoutType
         - habitsCompleted
-        - symptomsNotes
-        - claudeReflection
-        - openaiPlan
-        - combinedAdvice
+        - tasksPlanned
+        - tasksCompleted
+        - tasksMissed
+        - calendarCommitments
+        - healthNotes
+        - reflection
+        - aiInsight
+        - aiTomorrow
         - createdAt
 
-    CreateDailyCheckinBody:
+    CreateEodReviewBody:
       type: object
       properties:
         date:
           type: string
-        notes:
-          type: string
-        energyLevel:
+        sleepHours:
+          type: number
+        sleepScore:
           type: integer
-        focusLevel:
+        calories:
           type: integer
-        healthLevel:
+        proteinG:
+          type: number
+        carbsG:
+          type: number
+        fatG:
+          type: number
+        waterOz:
+          type: number
+        steps:
           type: integer
-        sleepQuality:
-          type: integer
-        mood:
-          type: integer
-        tasksCompleted:
-          type: string
-        tasksMissed:
+        workoutCompleted:
+          type: boolean
+        workoutType:
           type: string
         habitsCompleted:
-          type: ["string", "null"]
-        symptomsNotes:
-          type: ["string", "null"]
+          type: string
+        tasksPlanned:
+          type: integer
+        tasksCompleted:
+          type: integer
+        tasksMissed:
+          type: integer
+        calendarCommitments:
+          type: string
+        healthNotes:
+          type: string
+        reflection:
+          type: string
       required:
         - date
-        - notes
-        - energyLevel
-        - focusLevel
-        - healthLevel
-        - sleepQuality
-        - mood
-        - tasksCompleted
-        - tasksMissed
 
-    WeeklyReview:
+    PreDayPlan:
+      type: object
+      properties:
+        id:
+          type: integer
+        date:
+          type: string
+        tasksPlanned:
+          type: ["string", "null"]
+        calendarCommitments:
+          type: ["string", "null"]
+        energyNote:
+          type: ["string", "null"]
+        aiPlan:
+          type: ["string", "null"]
+        aiContext:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+      required:
+        - id
+        - date
+        - tasksPlanned
+        - calendarCommitments
+        - energyNote
+        - aiPlan
+        - aiContext
+        - createdAt
+
+    CreatePreDayPlanBody:
+      type: object
+      properties:
+        date:
+          type: string
+        tasksPlanned:
+          type: string
+        calendarCommitments:
+          type: string
+        energyNote:
+          type: string
+      required:
+        - date
+
+    PreWeekPlan:
       type: object
       properties:
         id:
           type: integer
         weekStartDate:
           type: string
-        weekNotes:
-          type: string
-        mainWins:
-          type: string
-        mainFrustrations:
-          type: string
-        energyTrend:
-          type: string
-        healthTrend:
-          type: string
-        goalsNextWeek:
-          type: string
-        existingCommitments:
-          type: string
-        claudeReflection:
+        goals:
           type: ["string", "null"]
-        openaiPlan:
+        calendarCommitments:
           type: ["string", "null"]
-        combinedAdvice:
+        capacityNote:
+          type: ["string", "null"]
+        reflection:
+          type: ["string", "null"]
+        aiPlan:
+          type: ["string", "null"]
+        aiContext:
           type: ["string", "null"]
         createdAt:
           type: string
       required:
         - id
         - weekStartDate
-        - weekNotes
-        - mainWins
-        - mainFrustrations
-        - energyTrend
-        - healthTrend
-        - goalsNextWeek
-        - existingCommitments
-        - claudeReflection
-        - openaiPlan
-        - combinedAdvice
+        - goals
+        - calendarCommitments
+        - capacityNote
+        - reflection
+        - aiPlan
+        - aiContext
         - createdAt
 
-    CreateWeeklyReviewBody:
+    CreatePreWeekPlanBody:
       type: object
       properties:
         weekStartDate:
           type: string
-        weekNotes:
+        goals:
           type: string
-        mainWins:
+        calendarCommitments:
           type: string
-        mainFrustrations:
+        capacityNote:
           type: string
-        energyTrend:
-          type: string
-        healthTrend:
-          type: string
-        goalsNextWeek:
-          type: string
-        existingCommitments:
+        reflection:
           type: string
       required:
         - weekStartDate
-        - weekNotes
-        - mainWins
-        - mainFrustrations
-        - energyTrend
-        - healthTrend
-        - goalsNextWeek
-        - existingCommitments
 
     OperatorStats:
       type: object
       properties:
-        totalCheckins:
+        totalEodReviews:
           type: integer
-        totalWeeklyReviews:
+        totalDayPlans:
           type: integer
-        avgEnergy:
-          type: ["number", "null"]
-        avgFocus:
-          type: ["number", "null"]
-        avgMood:
-          type: ["number", "null"]
-        avgSleep:
-          type: ["number", "null"]
-        avgHealth:
-          type: ["number", "null"]
-        lastCheckinDate:
+        totalWeekPlans:
+          type: integer
+        lastEodDate:
           type: ["string", "null"]
-        lastWeeklyReviewDate:
+        lastDayPlanDate:
+          type: ["string", "null"]
+        lastWeekPlanDate:
           type: ["string", "null"]
         streakDays:
           type: integer
       required:
-        - totalCheckins
-        - totalWeeklyReviews
-        - avgEnergy
-        - avgFocus
-        - avgMood
-        - avgSleep
-        - avgHealth
-        - lastCheckinDate
-        - lastWeeklyReviewDate
+        - totalEodReviews
+        - totalDayPlans
+        - totalWeekPlans
+        - lastEodDate
+        - lastDayPlanDate
+        - lastWeekPlanDate
         - streakDays
-
-    TrendPoint:
-      type: object
-      properties:
-        date:
-          type: string
-        energy:
-          type: integer
-        focus:
-          type: integer
-        mood:
-          type: integer
-        sleep:
-          type: integer
-        health:
-          type: integer
-      required:
-        - date
-        - energy
-        - focus
-        - mood
-        - sleep
-        - health
-
-    ReflectRequest:
-      type: object
-      properties:
-        notes:
-          type: string
-        energyLevel:
-          type: integer
-        focusLevel:
-          type: integer
-        healthLevel:
-          type: integer
-        sleepQuality:
-          type: integer
-        mood:
-          type: integer
-        tasksCompleted:
-          type: string
-        tasksMissed:
-          type: string
-        habitsCompleted:
-          type: string
-        symptomsNotes:
-          type: string
-      required:
-        - notes
-
-    ReflectResponse:
-      type: object
-      properties:
-        reflection:
-          type: string
-      required:
-        - reflection
-
-    PlanRequest:
-      type: object
-      properties:
-        notes:
-          type: string
-        energyLevel:
-          type: integer
-        focusLevel:
-          type: integer
-        healthLevel:
-          type: integer
-        sleepQuality:
-          type: integer
-        mood:
-          type: integer
-        tasksCompleted:
-          type: string
-        tasksMissed:
-          type: string
-        goalsNextWeek:
-          type: string
-        existingCommitments:
-          type: string
-      required:
-        - notes
-
-    PlanResponse:
-      type: object
-      properties:
-        plan:
-          type: string
-      required:
-        - plan
-
-    Metric:
-      type: object
-      properties:
-        id:
-          type: integer
-        name:
-          type: string
-        type:
-          type: string
-          enum: [number, checkbox, toggle, dropdown, text]
-        category:
-          type: string
-          enum: [Recovery, Nutrition, Activity, Productivity, Custom]
-        targetValue:
-          type: ["string", "null"]
-        importanceLevel:
-          type: ["integer", "null"]
-        sortOrder:
-          type: integer
-        isActive:
-          type: boolean
-        createdAt:
-          type: string
-      required:
-        - id
-        - name
-        - type
-        - category
-        - targetValue
-        - importanceLevel
-        - sortOrder
-        - isActive
-        - createdAt
-
-    CreateMetricBody:
-      type: object
-      properties:
-        name:
-          type: string
-        type:
-          type: string
-          enum: [number, checkbox, toggle, dropdown, text]
-        category:
-          type: string
-          enum: [Recovery, Nutrition, Activity, Productivity, Custom]
-        targetValue:
-          type: ["string", "null"]
-        importanceLevel:
-          type: ["integer", "null"]
-        sortOrder:
-          type: ["integer", "null"]
-      required:
-        - name
-        - type
-        - category
-
-    UpdateMetricBody:
-      type: object
-      properties:
-        name:
-          type: string
-        type:
-          type: string
-          enum: [number, checkbox, toggle, dropdown, text]
-        category:
-          type: string
-          enum: [Recovery, Nutrition, Activity, Productivity, Custom]
-        targetValue:
-          type: ["string", "null"]
-        importanceLevel:
-          type: ["integer", "null"]
-        sortOrder:
-          type: ["integer", "null"]
-        isActive:
-          type: ["boolean", "null"]
-
-    MetricLog:
-      type: object
-      properties:
-        id:
-          type: integer
-        date:
-          type: string
-        metricId:
-          type: integer
-        value:
-          type: string
-        createdAt:
-          type: string
-      required:
-        - id
-        - date
-        - metricId
-        - value
-        - createdAt
-
-    MetricLogEntry:
-      type: object
-      properties:
-        id:
-          type: integer
-        date:
-          type: string
-        metricId:
-          type: integer
-        value:
-          type: string
-        createdAt:
-          type: string
-        metricName:
-          type: string
-        metricType:
-          type: string
-          enum: [number, checkbox, toggle, dropdown, text]
-        metricCategory:
-          type: string
-          enum: [Recovery, Nutrition, Activity, Productivity, Custom]
-      required:
-        - id
-        - date
-        - metricId
-        - value
-        - createdAt
-        - metricName
-        - metricType
-        - metricCategory
-
-    MetricLogInput:
-      type: object
-      properties:
-        metricId:
-          type: integer
-        value:
-          type: string
-      required:
-        - metricId
-        - value
-
-    SaveMetricLogsBody:
-      type: object
-      properties:
-        date:
-          type: string
-        entries:
-          type: array
-          items:
-            $ref: "#/components/schemas/MetricLogInput"
-      required:
-        - date
-        - entries

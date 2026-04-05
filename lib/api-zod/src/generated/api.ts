@@ -3,7 +3,7 @@
  * Do not edit manually.
  * Api
  * API specification for Operator - personal life OS
- * OpenAPI spec version: 0.1.0
+ * OpenAPI spec version: 0.2.0
  */
 import * as zod from "zod";
 
@@ -16,353 +16,233 @@ export const HealthCheckResponse = zod.object({
 });
 
 /**
- * @summary List all daily check-ins
+ * @summary List all end-of-day reviews
  */
-export const listDailyCheckinsQueryLimitDefault = 50;
-export const listDailyCheckinsQueryOffsetDefault = 0;
+export const listEodReviewsQueryLimitDefault = 50;
+export const listEodReviewsQueryOffsetDefault = 0;
 
-export const ListDailyCheckinsQueryParams = zod.object({
-  limit: zod.coerce.number().default(listDailyCheckinsQueryLimitDefault),
-  offset: zod.coerce.number().default(listDailyCheckinsQueryOffsetDefault),
+export const ListEodReviewsQueryParams = zod.object({
+  limit: zod.coerce.number().default(listEodReviewsQueryLimitDefault),
+  offset: zod.coerce.number().default(listEodReviewsQueryOffsetDefault),
 });
 
-export const ListDailyCheckinsResponseItem = zod.object({
+export const ListEodReviewsResponseItem = zod.object({
   id: zod.number(),
   date: zod.string(),
-  notes: zod.string(),
-  energyLevel: zod.number(),
-  focusLevel: zod.number(),
-  healthLevel: zod.number(),
-  sleepQuality: zod.number(),
-  mood: zod.number(),
-  tasksCompleted: zod.string(),
-  tasksMissed: zod.string(),
+  sleepHours: zod.number().nullable(),
+  sleepScore: zod.number().nullable(),
+  calories: zod.number().nullable(),
+  proteinG: zod.number().nullable(),
+  carbsG: zod.number().nullable(),
+  fatG: zod.number().nullable(),
+  waterOz: zod.number().nullable(),
+  steps: zod.number().nullable(),
+  workoutCompleted: zod.boolean().nullable(),
+  workoutType: zod.string().nullable(),
   habitsCompleted: zod.string().nullable(),
-  symptomsNotes: zod.string().nullable(),
-  claudeReflection: zod.string().nullable(),
-  openaiPlan: zod.string().nullable(),
-  combinedAdvice: zod.string().nullable(),
+  tasksPlanned: zod.number().nullable(),
+  tasksCompleted: zod.number().nullable(),
+  tasksMissed: zod.number().nullable(),
+  calendarCommitments: zod.string().nullable(),
+  healthNotes: zod.string().nullable(),
+  reflection: zod.string().nullable(),
+  aiInsight: zod.string().nullable(),
+  aiTomorrow: zod.string().nullable(),
   createdAt: zod.string(),
 });
-export const ListDailyCheckinsResponse = zod.array(
-  ListDailyCheckinsResponseItem,
-);
+export const ListEodReviewsResponse = zod.array(ListEodReviewsResponseItem);
 
 /**
- * @summary Create a daily check-in with AI analysis
+ * @summary Create an end-of-day review with AI analysis
  */
-export const CreateDailyCheckinBody = zod.object({
+export const CreateEodReviewBody = zod.object({
   date: zod.string(),
-  notes: zod.string(),
-  energyLevel: zod.number(),
-  focusLevel: zod.number(),
-  healthLevel: zod.number(),
-  sleepQuality: zod.number(),
-  mood: zod.number(),
-  tasksCompleted: zod.string(),
-  tasksMissed: zod.string(),
-  habitsCompleted: zod.string().nullish(),
-  symptomsNotes: zod.string().nullish(),
+  sleepHours: zod.number().optional(),
+  sleepScore: zod.number().optional(),
+  calories: zod.number().optional(),
+  proteinG: zod.number().optional(),
+  carbsG: zod.number().optional(),
+  fatG: zod.number().optional(),
+  waterOz: zod.number().optional(),
+  steps: zod.number().optional(),
+  workoutCompleted: zod.boolean().optional(),
+  workoutType: zod.string().optional(),
+  habitsCompleted: zod.string().optional(),
+  tasksPlanned: zod.number().optional(),
+  tasksCompleted: zod.number().optional(),
+  tasksMissed: zod.number().optional(),
+  calendarCommitments: zod.string().optional(),
+  healthNotes: zod.string().optional(),
+  reflection: zod.string().optional(),
 });
 
 /**
- * @summary Get a specific daily check-in
+ * @summary Get a specific end-of-day review
  */
-export const GetDailyCheckinParams = zod.object({
+export const GetEodReviewParams = zod.object({
   id: zod.coerce.number(),
 });
 
-export const GetDailyCheckinResponse = zod.object({
+export const GetEodReviewResponse = zod.object({
   id: zod.number(),
   date: zod.string(),
-  notes: zod.string(),
-  energyLevel: zod.number(),
-  focusLevel: zod.number(),
-  healthLevel: zod.number(),
-  sleepQuality: zod.number(),
-  mood: zod.number(),
-  tasksCompleted: zod.string(),
-  tasksMissed: zod.string(),
+  sleepHours: zod.number().nullable(),
+  sleepScore: zod.number().nullable(),
+  calories: zod.number().nullable(),
+  proteinG: zod.number().nullable(),
+  carbsG: zod.number().nullable(),
+  fatG: zod.number().nullable(),
+  waterOz: zod.number().nullable(),
+  steps: zod.number().nullable(),
+  workoutCompleted: zod.boolean().nullable(),
+  workoutType: zod.string().nullable(),
   habitsCompleted: zod.string().nullable(),
-  symptomsNotes: zod.string().nullable(),
-  claudeReflection: zod.string().nullable(),
-  openaiPlan: zod.string().nullable(),
-  combinedAdvice: zod.string().nullable(),
+  tasksPlanned: zod.number().nullable(),
+  tasksCompleted: zod.number().nullable(),
+  tasksMissed: zod.number().nullable(),
+  calendarCommitments: zod.string().nullable(),
+  healthNotes: zod.string().nullable(),
+  reflection: zod.string().nullable(),
+  aiInsight: zod.string().nullable(),
+  aiTomorrow: zod.string().nullable(),
   createdAt: zod.string(),
 });
 
 /**
- * @summary Delete a daily check-in
+ * @summary Delete an end-of-day review
  */
-export const DeleteDailyCheckinParams = zod.object({
+export const DeleteEodReviewParams = zod.object({
   id: zod.coerce.number(),
 });
 
 /**
- * @summary List all weekly reviews
+ * @summary List all pre-day plans
  */
-export const listWeeklyReviewsQueryLimitDefault = 20;
-export const listWeeklyReviewsQueryOffsetDefault = 0;
+export const listPreDayPlansQueryLimitDefault = 50;
+export const listPreDayPlansQueryOffsetDefault = 0;
 
-export const ListWeeklyReviewsQueryParams = zod.object({
-  limit: zod.coerce.number().default(listWeeklyReviewsQueryLimitDefault),
-  offset: zod.coerce.number().default(listWeeklyReviewsQueryOffsetDefault),
+export const ListPreDayPlansQueryParams = zod.object({
+  limit: zod.coerce.number().default(listPreDayPlansQueryLimitDefault),
+  offset: zod.coerce.number().default(listPreDayPlansQueryOffsetDefault),
 });
 
-export const ListWeeklyReviewsResponseItem = zod.object({
-  id: zod.number(),
-  weekStartDate: zod.string(),
-  weekNotes: zod.string(),
-  mainWins: zod.string(),
-  mainFrustrations: zod.string(),
-  energyTrend: zod.string(),
-  healthTrend: zod.string(),
-  goalsNextWeek: zod.string(),
-  existingCommitments: zod.string(),
-  claudeReflection: zod.string().nullable(),
-  openaiPlan: zod.string().nullable(),
-  combinedAdvice: zod.string().nullable(),
-  createdAt: zod.string(),
-});
-export const ListWeeklyReviewsResponse = zod.array(
-  ListWeeklyReviewsResponseItem,
-);
-
-/**
- * @summary Create a weekly review with AI analysis
- */
-export const CreateWeeklyReviewBody = zod.object({
-  weekStartDate: zod.string(),
-  weekNotes: zod.string(),
-  mainWins: zod.string(),
-  mainFrustrations: zod.string(),
-  energyTrend: zod.string(),
-  healthTrend: zod.string(),
-  goalsNextWeek: zod.string(),
-  existingCommitments: zod.string(),
-});
-
-/**
- * @summary Get a specific weekly review
- */
-export const GetWeeklyReviewParams = zod.object({
-  id: zod.coerce.number(),
-});
-
-export const GetWeeklyReviewResponse = zod.object({
-  id: zod.number(),
-  weekStartDate: zod.string(),
-  weekNotes: zod.string(),
-  mainWins: zod.string(),
-  mainFrustrations: zod.string(),
-  energyTrend: zod.string(),
-  healthTrend: zod.string(),
-  goalsNextWeek: zod.string(),
-  existingCommitments: zod.string(),
-  claudeReflection: zod.string().nullable(),
-  openaiPlan: zod.string().nullable(),
-  combinedAdvice: zod.string().nullable(),
-  createdAt: zod.string(),
-});
-
-/**
- * @summary Delete a weekly review
- */
-export const DeleteWeeklyReviewParams = zod.object({
-  id: zod.coerce.number(),
-});
-
-/**
- * @summary List all active metrics
- */
-export const ListMetricsResponseItem = zod.object({
-  id: zod.number(),
-  name: zod.string(),
-  type: zod.enum(["number", "checkbox", "toggle", "dropdown", "text"]),
-  category: zod.enum([
-    "Recovery",
-    "Nutrition",
-    "Activity",
-    "Productivity",
-    "Custom",
-  ]),
-  targetValue: zod.string().nullable(),
-  importanceLevel: zod.number().nullable(),
-  sortOrder: zod.number(),
-  isActive: zod.boolean(),
-  createdAt: zod.string(),
-});
-export const ListMetricsResponse = zod.array(ListMetricsResponseItem);
-
-/**
- * @summary Create a new metric
- */
-export const CreateMetricBody = zod.object({
-  name: zod.string(),
-  type: zod.enum(["number", "checkbox", "toggle", "dropdown", "text"]),
-  category: zod.enum([
-    "Recovery",
-    "Nutrition",
-    "Activity",
-    "Productivity",
-    "Custom",
-  ]),
-  targetValue: zod.string().nullish(),
-  importanceLevel: zod.number().nullish(),
-  sortOrder: zod.number().nullish(),
-});
-
-/**
- * @summary Update a metric
- */
-export const UpdateMetricParams = zod.object({
-  id: zod.coerce.number(),
-});
-
-export const UpdateMetricBody = zod.object({
-  name: zod.string().optional(),
-  type: zod
-    .enum(["number", "checkbox", "toggle", "dropdown", "text"])
-    .optional(),
-  category: zod
-    .enum(["Recovery", "Nutrition", "Activity", "Productivity", "Custom"])
-    .optional(),
-  targetValue: zod.string().nullish(),
-  importanceLevel: zod.number().nullish(),
-  sortOrder: zod.number().nullish(),
-  isActive: zod.boolean().nullish(),
-});
-
-export const UpdateMetricResponse = zod.object({
-  id: zod.number(),
-  name: zod.string(),
-  type: zod.enum(["number", "checkbox", "toggle", "dropdown", "text"]),
-  category: zod.enum([
-    "Recovery",
-    "Nutrition",
-    "Activity",
-    "Productivity",
-    "Custom",
-  ]),
-  targetValue: zod.string().nullable(),
-  importanceLevel: zod.number().nullable(),
-  sortOrder: zod.number(),
-  isActive: zod.boolean(),
-  createdAt: zod.string(),
-});
-
-/**
- * @summary Delete a metric
- */
-export const DeleteMetricParams = zod.object({
-  id: zod.coerce.number(),
-});
-
-/**
- * @summary Get metric logs for a specific date
- */
-export const ListMetricLogsQueryParams = zod.object({
-  date: zod.coerce.string(),
-});
-
-export const ListMetricLogsResponseItem = zod.object({
+export const ListPreDayPlansResponseItem = zod.object({
   id: zod.number(),
   date: zod.string(),
-  metricId: zod.number(),
-  value: zod.string(),
+  tasksPlanned: zod.string().nullable(),
+  calendarCommitments: zod.string().nullable(),
+  energyNote: zod.string().nullable(),
+  aiPlan: zod.string().nullable(),
+  aiContext: zod.string().nullable(),
   createdAt: zod.string(),
-  metricName: zod.string(),
-  metricType: zod.enum(["number", "checkbox", "toggle", "dropdown", "text"]),
-  metricCategory: zod.enum([
-    "Recovery",
-    "Nutrition",
-    "Activity",
-    "Productivity",
-    "Custom",
-  ]),
 });
-export const ListMetricLogsResponse = zod.array(ListMetricLogsResponseItem);
+export const ListPreDayPlansResponse = zod.array(ListPreDayPlansResponseItem);
 
 /**
- * @summary Save metric log entries for a date (upsert)
+ * @summary Create a pre-day plan with AI output
  */
-export const SaveMetricLogsBody = zod.object({
+export const CreatePreDayPlanBody = zod.object({
   date: zod.string(),
-  entries: zod.array(
-    zod.object({
-      metricId: zod.number(),
-      value: zod.string(),
-    }),
-  ),
+  tasksPlanned: zod.string().optional(),
+  calendarCommitments: zod.string().optional(),
+  energyNote: zod.string().optional(),
+});
+
+/**
+ * @summary Get a specific pre-day plan
+ */
+export const GetPreDayPlanParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const GetPreDayPlanResponse = zod.object({
+  id: zod.number(),
+  date: zod.string(),
+  tasksPlanned: zod.string().nullable(),
+  calendarCommitments: zod.string().nullable(),
+  energyNote: zod.string().nullable(),
+  aiPlan: zod.string().nullable(),
+  aiContext: zod.string().nullable(),
+  createdAt: zod.string(),
+});
+
+/**
+ * @summary Delete a pre-day plan
+ */
+export const DeletePreDayPlanParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+/**
+ * @summary List all pre-week plans
+ */
+export const listPreWeekPlansQueryLimitDefault = 20;
+export const listPreWeekPlansQueryOffsetDefault = 0;
+
+export const ListPreWeekPlansQueryParams = zod.object({
+  limit: zod.coerce.number().default(listPreWeekPlansQueryLimitDefault),
+  offset: zod.coerce.number().default(listPreWeekPlansQueryOffsetDefault),
+});
+
+export const ListPreWeekPlansResponseItem = zod.object({
+  id: zod.number(),
+  weekStartDate: zod.string(),
+  goals: zod.string().nullable(),
+  calendarCommitments: zod.string().nullable(),
+  capacityNote: zod.string().nullable(),
+  reflection: zod.string().nullable(),
+  aiPlan: zod.string().nullable(),
+  aiContext: zod.string().nullable(),
+  createdAt: zod.string(),
+});
+export const ListPreWeekPlansResponse = zod.array(ListPreWeekPlansResponseItem);
+
+/**
+ * @summary Create a pre-week plan with AI output
+ */
+export const CreatePreWeekPlanBody = zod.object({
+  weekStartDate: zod.string(),
+  goals: zod.string().optional(),
+  calendarCommitments: zod.string().optional(),
+  capacityNote: zod.string().optional(),
+  reflection: zod.string().optional(),
+});
+
+/**
+ * @summary Get a specific pre-week plan
+ */
+export const GetPreWeekPlanParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const GetPreWeekPlanResponse = zod.object({
+  id: zod.number(),
+  weekStartDate: zod.string(),
+  goals: zod.string().nullable(),
+  calendarCommitments: zod.string().nullable(),
+  capacityNote: zod.string().nullable(),
+  reflection: zod.string().nullable(),
+  aiPlan: zod.string().nullable(),
+  aiContext: zod.string().nullable(),
+  createdAt: zod.string(),
+});
+
+/**
+ * @summary Delete a pre-week plan
+ */
+export const DeletePreWeekPlanParams = zod.object({
+  id: zod.coerce.number(),
 });
 
 /**
  * @summary Get overall stats summary
  */
 export const GetOperatorStatsResponse = zod.object({
-  totalCheckins: zod.number(),
-  totalWeeklyReviews: zod.number(),
-  avgEnergy: zod.number().nullable(),
-  avgFocus: zod.number().nullable(),
-  avgMood: zod.number().nullable(),
-  avgSleep: zod.number().nullable(),
-  avgHealth: zod.number().nullable(),
-  lastCheckinDate: zod.string().nullable(),
-  lastWeeklyReviewDate: zod.string().nullable(),
+  totalEodReviews: zod.number(),
+  totalDayPlans: zod.number(),
+  totalWeekPlans: zod.number(),
+  lastEodDate: zod.string().nullable(),
+  lastDayPlanDate: zod.string().nullable(),
+  lastWeekPlanDate: zod.string().nullable(),
   streakDays: zod.number(),
-});
-
-/**
- * @summary Get recent metric trends (last 7 check-ins)
- */
-export const GetOperatorTrendsResponseItem = zod.object({
-  date: zod.string(),
-  energy: zod.number(),
-  focus: zod.number(),
-  mood: zod.number(),
-  sleep: zod.number(),
-  health: zod.number(),
-});
-export const GetOperatorTrendsResponse = zod.array(
-  GetOperatorTrendsResponseItem,
-);
-
-/**
- * @summary Get a Claude reflection for a set of notes/metrics
- */
-export const OperatorReflectBody = zod.object({
-  notes: zod.string(),
-  energyLevel: zod.number().optional(),
-  focusLevel: zod.number().optional(),
-  healthLevel: zod.number().optional(),
-  sleepQuality: zod.number().optional(),
-  mood: zod.number().optional(),
-  tasksCompleted: zod.string().optional(),
-  tasksMissed: zod.string().optional(),
-  habitsCompleted: zod.string().optional(),
-  symptomsNotes: zod.string().optional(),
-});
-
-export const OperatorReflectResponse = zod.object({
-  reflection: zod.string(),
-});
-
-/**
- * @summary Get an OpenAI tomorrow plan for a set of notes/metrics
- */
-export const OperatorPlanBody = zod.object({
-  notes: zod.string(),
-  energyLevel: zod.number().optional(),
-  focusLevel: zod.number().optional(),
-  healthLevel: zod.number().optional(),
-  sleepQuality: zod.number().optional(),
-  mood: zod.number().optional(),
-  tasksCompleted: zod.string().optional(),
-  tasksMissed: zod.string().optional(),
-  goalsNextWeek: zod.string().optional(),
-  existingCommitments: zod.string().optional(),
-});
-
-export const OperatorPlanResponse = zod.object({
-  plan: zod.string(),
 });

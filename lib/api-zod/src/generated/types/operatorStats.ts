@@ -3,25 +3,18 @@
  * Do not edit manually.
  * Api
  * API specification for Operator - personal life OS
- * OpenAPI spec version: 0.1.0
+ * OpenAPI spec version: 0.2.0
  */
 
 export interface OperatorStats {
-  totalCheckins: number;
-  totalWeeklyReviews: number;
+  totalEodReviews: number;
+  totalDayPlans: number;
+  totalWeekPlans: number;
   /** @nullable */
-  avgEnergy: number | null;
+  lastEodDate: string | null;
   /** @nullable */
-  avgFocus: number | null;
+  lastDayPlanDate: string | null;
   /** @nullable */
-  avgMood: number | null;
-  /** @nullable */
-  avgSleep: number | null;
-  /** @nullable */
-  avgHealth: number | null;
-  /** @nullable */
-  lastCheckinDate: string | null;
-  /** @nullable */
-  lastWeeklyReviewDate: string | null;
+  lastWeekPlanDate: string | null;
   streakDays: number;
 }

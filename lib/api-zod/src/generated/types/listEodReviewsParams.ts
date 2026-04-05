@@ -3,10 +3,10 @@
  * Do not edit manually.
  * Api
  * API specification for Operator - personal life OS
- * OpenAPI spec version: 0.1.0
+ * OpenAPI spec version: 0.2.0
  */
 
-export type ListWeeklyReviewsParams = {
+export type ListEodReviewsParams = {
   limit?: number;
   offset?: number;
 };

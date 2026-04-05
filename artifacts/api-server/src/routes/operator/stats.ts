@@ -1,56 +1,54 @@
 import { Router } from "express";
-import { db, dailyCheckinsTable, weeklyReviewsTable } from "@workspace/db";
+import { db, endOfDayReviewsTable, preDayPlansTable, preWeekPlansTable } from "@workspace/db";
 import { desc, sql } from "drizzle-orm";
-import { anthropic } from "@workspace/integrations-anthropic-ai";
-import { openai } from "@workspace/integrations-openai-ai-server";
-import { OperatorReflectBody, OperatorPlanBody } from "@workspace/api-zod";
 
 const router = Router();
 
 // GET /api/operator/stats
 router.get("/stats", async (req, res) => {
   try {
-    const [checkinStats] = await db
-      .select({
-        total: sql<number>`count(*)::int`,
-        avgEnergy: sql<number>`avg(energy_level)::float`,
-        avgFocus: sql<number>`avg(focus_level)::float`,
-        avgMood: sql<number>`avg(mood)::float`,
-        avgSleep: sql<number>`avg(sleep_quality)::float`,
-        avgHealth: sql<number>`avg(health_level)::float`,
-      })
-      .from(dailyCheckinsTable);
+    const [eodStats] = await db
+      .select({ total: sql<number>`count(*)::int` })
+      .from(endOfDayReviewsTable);
 
-    const [weeklyStats] = await db
-      .select({
-        total: sql<number>`count(*)::int`,
-      })
-      .from(weeklyReviewsTable);
+    const [dayPlanStats] = await db
+      .select({ total: sql<number>`count(*)::int` })
+      .from(preDayPlansTable);
 
-    const [lastCheckin] = await db
-      .select({ date: dailyCheckinsTable.createdAt })
-      .from(dailyCheckinsTable)
-      .orderBy(desc(dailyCheckinsTable.createdAt))
+    const [weekPlanStats] = await db
+      .select({ total: sql<number>`count(*)::int` })
+      .from(preWeekPlansTable);
+
+    const [lastEod] = await db
+      .select({ date: endOfDayReviewsTable.date })
+      .from(endOfDayReviewsTable)
+      .orderBy(desc(endOfDayReviewsTable.createdAt))
       .limit(1);
 
-    const [lastWeekly] = await db
-      .select({ date: weeklyReviewsTable.createdAt })
-      .from(weeklyReviewsTable)
-      .orderBy(desc(weeklyReviewsTable.createdAt))
+    const [lastDayPlan] = await db
+      .select({ date: preDayPlansTable.date })
+      .from(preDayPlansTable)
+      .orderBy(desc(preDayPlansTable.createdAt))
       .limit(1);
 
-    // Calculate streak: consecutive days with check-ins
-    const recentCheckins = await db
-      .select({ date: dailyCheckinsTable.date })
-      .from(dailyCheckinsTable)
-      .orderBy(desc(dailyCheckinsTable.createdAt))
+    const [lastWeekPlan] = await db
+      .select({ date: preWeekPlansTable.weekStartDate })
+      .from(preWeekPlansTable)
+      .orderBy(desc(preWeekPlansTable.createdAt))
+      .limit(1);
+
+    // Calculate streak from EOD reviews
+    const recentEod = await db
+      .select({ date: endOfDayReviewsTable.date })
+      .from(endOfDayReviewsTable)
+      .orderBy(desc(endOfDayReviewsTable.createdAt))
       .limit(30);
 
     let streakDays = 0;
-    if (recentCheckins.length > 0) {
+    if (recentEod.length > 0) {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      const dates = recentCheckins.map(c => {
+      const dates = recentEod.map(c => {
         const d = new Date(c.date);
         d.setHours(0, 0, 0, 0);
         return d.getTime();
@@ -69,129 +67,17 @@ router.get("/stats", async (req, res) => {
     }
 
     res.json({
-      totalCheckins: checkinStats?.total ?? 0,
-      totalWeeklyReviews: weeklyStats?.total ?? 0,
-      avgEnergy: checkinStats?.avgEnergy ? Math.round(checkinStats.avgEnergy * 10) / 10 : null,
-      avgFocus: checkinStats?.avgFocus ? Math.round(checkinStats.avgFocus * 10) / 10 : null,
-      avgMood: checkinStats?.avgMood ? Math.round(checkinStats.avgMood * 10) / 10 : null,
-      avgSleep: checkinStats?.avgSleep ? Math.round(checkinStats.avgSleep * 10) / 10 : null,
-      avgHealth: checkinStats?.avgHealth ? Math.round(checkinStats.avgHealth * 10) / 10 : null,
-      lastCheckinDate: lastCheckin?.date ? lastCheckin.date.toISOString() : null,
-      lastWeeklyReviewDate: lastWeekly?.date ? lastWeekly.date.toISOString() : null,
+      totalEodReviews: eodStats?.total ?? 0,
+      totalDayPlans: dayPlanStats?.total ?? 0,
+      totalWeekPlans: weekPlanStats?.total ?? 0,
+      lastEodDate: lastEod?.date ?? null,
+      lastDayPlanDate: lastDayPlan?.date ?? null,
+      lastWeekPlanDate: lastWeekPlan?.date ?? null,
       streakDays,
     });
   } catch (err) {
     req.log.error({ err }, "Failed to get operator stats");
     res.status(500).json({ error: "Failed to get stats" });
-  }
-});
-
-// GET /api/operator/trends
-router.get("/trends", async (req, res) => {
-  try {
-    const recentCheckins = await db
-      .select({
-        date: dailyCheckinsTable.date,
-        energy: dailyCheckinsTable.energyLevel,
-        focus: dailyCheckinsTable.focusLevel,
-        mood: dailyCheckinsTable.mood,
-        sleep: dailyCheckinsTable.sleepQuality,
-        health: dailyCheckinsTable.healthLevel,
-      })
-      .from(dailyCheckinsTable)
-      .orderBy(desc(dailyCheckinsTable.createdAt))
-      .limit(7);
-
-    res.json(recentCheckins.reverse());
-  } catch (err) {
-    req.log.error({ err }, "Failed to get operator trends");
-    res.status(500).json({ error: "Failed to get trends" });
-  }
-});
-
-// POST /api/operator/reflect — standalone Claude reflection
-router.post("/reflect", async (req, res) => {
-  const parsed = OperatorReflectBody.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.issues.map(i => i.message).join(", ") });
-    return;
-  }
-  try {
-    const { notes, energyLevel, focusLevel, healthLevel, sleepQuality, mood, tasksCompleted, tasksMissed, habitsCompleted, symptomsNotes } = parsed.data;
-
-    const metricsText = [
-      energyLevel != null ? `Energy: ${energyLevel}/10` : null,
-      focusLevel != null ? `Focus: ${focusLevel}/10` : null,
-      healthLevel != null ? `Health: ${healthLevel}/10` : null,
-      sleepQuality != null ? `Sleep: ${sleepQuality}/10` : null,
-      mood != null ? `Mood: ${mood}/10` : null,
-      tasksCompleted ? `Tasks completed: ${tasksCompleted}` : null,
-      tasksMissed ? `Tasks missed: ${tasksMissed}` : null,
-      habitsCompleted ? `Habits completed: ${habitsCompleted}` : null,
-      symptomsNotes ? `Symptoms/Health notes: ${symptomsNotes}` : null,
-    ].filter(Boolean).join("\n");
-
-    const message = await anthropic.messages.create({
-      model: "claude-sonnet-4-6",
-      max_tokens: 8192,
-      messages: [
-        {
-          role: "user",
-          content: `You are a thoughtful life coach. Reflect on this day entry and provide honest, constructive feedback.\n\nNotes: ${notes}\n\n${metricsText}\n\nProvide a structured reflection covering: what went well, what patterns you notice, and one key insight for personal growth.`,
-        },
-      ],
-    });
-
-    const reflection = message.content[0]?.type === "text" ? message.content[0].text : "";
-    res.json({ reflection });
-  } catch (err) {
-    req.log.error({ err }, "Failed to generate Claude reflection");
-    res.status(500).json({ error: "Failed to generate reflection" });
-  }
-});
-
-// POST /api/operator/plan — standalone OpenAI tomorrow plan
-router.post("/plan", async (req, res) => {
-  const parsed = OperatorPlanBody.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.issues.map(i => i.message).join(", ") });
-    return;
-  }
-  try {
-    const { notes, energyLevel, focusLevel, healthLevel, sleepQuality, mood, tasksCompleted, tasksMissed, goalsNextWeek, existingCommitments } = parsed.data;
-
-    const contextText = [
-      energyLevel != null ? `Energy: ${energyLevel}/10` : null,
-      focusLevel != null ? `Focus: ${focusLevel}/10` : null,
-      healthLevel != null ? `Health: ${healthLevel}/10` : null,
-      sleepQuality != null ? `Sleep: ${sleepQuality}/10` : null,
-      mood != null ? `Mood: ${mood}/10` : null,
-      tasksCompleted ? `Tasks completed: ${tasksCompleted}` : null,
-      tasksMissed ? `Tasks missed: ${tasksMissed}` : null,
-      goalsNextWeek ? `Goals for next period: ${goalsNextWeek}` : null,
-      existingCommitments ? `Existing commitments: ${existingCommitments}` : null,
-    ].filter(Boolean).join("\n");
-
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o",
-      max_completion_tokens: 2048,
-      messages: [
-        {
-          role: "system",
-          content: "You are a strategic planner. Based on today's performance and context, create a concrete, actionable plan for tomorrow. Be specific and realistic.",
-        },
-        {
-          role: "user",
-          content: `Today's notes: ${notes}\n\n${contextText}\n\nCreate a structured plan for tomorrow with: top 3 priorities, energy management recommendations, and one thing to avoid based on today's patterns.`,
-        },
-      ],
-    });
-
-    const plan = response.choices[0]?.message?.content ?? "";
-    res.json({ plan });
-  } catch (err) {
-    req.log.error({ err }, "Failed to generate OpenAI plan");
-    res.status(500).json({ error: "Failed to generate plan" });
   }
 });
 

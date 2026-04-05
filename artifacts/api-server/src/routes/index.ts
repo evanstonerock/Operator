@@ -1,18 +1,16 @@
 import { Router, type IRouter } from "express";
 import healthRouter from "./health";
-import dailyCheckinsRouter from "./operator/daily-checkins";
-import weeklyReviewsRouter from "./operator/weekly-reviews";
+import eodReviewsRouter from "./operator/eod-reviews";
+import preDayPlansRouter from "./operator/pre-day-plans";
+import preWeekPlansRouter from "./operator/pre-week-plans";
 import statsRouter from "./operator/stats";
-import metricsRouter from "./operator/metrics";
-import metricLogsRouter from "./operator/metric-logs";
 
 const router: IRouter = Router();
 
 router.use(healthRouter);
-router.use("/daily-checkins", dailyCheckinsRouter);
-router.use("/weekly-reviews", weeklyReviewsRouter);
+router.use("/eod-reviews", eodReviewsRouter);
+router.use("/pre-day-plans", preDayPlansRouter);
+router.use("/pre-week-plans", preWeekPlansRouter);
 router.use("/operator", statsRouter);
-router.use("/metrics", metricsRouter);
-router.use("/metric-logs", metricLogsRouter);
 
 export default router;

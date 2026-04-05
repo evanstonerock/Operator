@@ -4,10 +4,10 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import { AppLayout } from "@/components/layout/AppLayout";
-import DailyCheckin from "@/pages/DailyCheckin";
-import WeeklyReview from "@/pages/WeeklyReview";
+import EndOfDayReview from "@/pages/EndOfDayReview";
+import PreDayPlan from "@/pages/PreDayPlan";
+import PreWeekPlan from "@/pages/PreWeekPlan";
 import History from "@/pages/History";
-import Settings from "@/pages/Settings";
 
 const queryClient = new QueryClient();
 
@@ -15,10 +15,10 @@ function Router() {
   return (
     <AppLayout>
       <Switch>
-        <Route path="/" component={DailyCheckin} />
-        <Route path="/weekly" component={WeeklyReview} />
+        <Route path="/" component={EndOfDayReview} />
+        <Route path="/pre-day" component={PreDayPlan} />
+        <Route path="/pre-week" component={PreWeekPlan} />
         <Route path="/history" component={History} />
-        <Route path="/settings" component={Settings} />
         <Route component={NotFound} />
       </Switch>
     </AppLayout>
@@ -26,7 +26,6 @@ function Router() {
 }
 
 function App() {
-  // Always dark mode
   if (typeof document !== 'undefined') {
     document.documentElement.classList.add('dark');
   }

@@ -3,7 +3,7 @@
  * Do not edit manually.
  * Api
  * API specification for Operator - personal life OS
- * OpenAPI spec version: 0.1.0
+ * OpenAPI spec version: 0.2.0
  */
 import { useMutation, useQuery } from "@tanstack/react-query";
 import type {
@@ -17,27 +17,18 @@ import type {
 } from "@tanstack/react-query";
 
 import type {
-  CreateDailyCheckinBody,
-  CreateMetricBody,
-  CreateWeeklyReviewBody,
-  DailyCheckin,
+  CreateEodReviewBody,
+  CreatePreDayPlanBody,
+  CreatePreWeekPlanBody,
+  EodReview,
   ErrorResponse,
   HealthStatus,
-  ListDailyCheckinsParams,
-  ListMetricLogsParams,
-  ListWeeklyReviewsParams,
-  Metric,
-  MetricLog,
-  MetricLogEntry,
+  ListEodReviewsParams,
+  ListPreDayPlansParams,
+  ListPreWeekPlansParams,
   OperatorStats,
-  PlanRequest,
-  PlanResponse,
-  ReflectRequest,
-  ReflectResponse,
-  SaveMetricLogsBody,
-  TrendPoint,
-  UpdateMetricBody,
-  WeeklyReview,
+  PreDayPlan,
+  PreWeekPlan,
 } from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
@@ -126,9 +117,9 @@ export function useHealthCheck<
 }
 
 /**
- * @summary List all daily check-ins
+ * @summary List all end-of-day reviews
  */
-export const getListDailyCheckinsUrl = (params?: ListDailyCheckinsParams) => {
+export const getListEodReviewsUrl = (params?: ListEodReviewsParams) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
@@ -140,34 +131,736 @@ export const getListDailyCheckinsUrl = (params?: ListDailyCheckinsParams) => {
   const stringifiedParams = normalizedParams.toString();
 
   return stringifiedParams.length > 0
-    ? `/api/daily-checkins?${stringifiedParams}`
-    : `/api/daily-checkins`;
+    ? `/api/eod-reviews?${stringifiedParams}`
+    : `/api/eod-reviews`;
 };
 
-export const listDailyCheckins = async (
-  params?: ListDailyCheckinsParams,
+export const listEodReviews = async (
+  params?: ListEodReviewsParams,
   options?: RequestInit,
-): Promise<DailyCheckin[]> => {
-  return customFetch<DailyCheckin[]>(getListDailyCheckinsUrl(params), {
+): Promise<EodReview[]> => {
+  return customFetch<EodReview[]>(getListEodReviewsUrl(params), {
     ...options,
     method: "GET",
   });
 };
 
-export const getListDailyCheckinsQueryKey = (
-  params?: ListDailyCheckinsParams,
-) => {
-  return [`/api/daily-checkins`, ...(params ? [params] : [])] as const;
+export const getListEodReviewsQueryKey = (params?: ListEodReviewsParams) => {
+  return [`/api/eod-reviews`, ...(params ? [params] : [])] as const;
 };
 
-export const getListDailyCheckinsQueryOptions = <
-  TData = Awaited<ReturnType<typeof listDailyCheckins>>,
+export const getListEodReviewsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listEodReviews>>,
   TError = ErrorType<unknown>,
 >(
-  params?: ListDailyCheckinsParams,
+  params?: ListEodReviewsParams,
   options?: {
     query?: UseQueryOptions<
-      Awaited<ReturnType<typeof listDailyCheckins>>,
+      Awaited<ReturnType<typeof listEodReviews>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListEodReviewsQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listEodReviews>>> = ({
+    signal,
+  }) => listEodReviews(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listEodReviews>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListEodReviewsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listEodReviews>>
+>;
+export type ListEodReviewsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List all end-of-day reviews
+ */
+
+export function useListEodReviews<
+  TData = Awaited<ReturnType<typeof listEodReviews>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ListEodReviewsParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listEodReviews>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListEodReviewsQueryOptions(params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Create an end-of-day review with AI analysis
+ */
+export const getCreateEodReviewUrl = () => {
+  return `/api/eod-reviews`;
+};
+
+export const createEodReview = async (
+  createEodReviewBody: CreateEodReviewBody,
+  options?: RequestInit,
+): Promise<EodReview> => {
+  return customFetch<EodReview>(getCreateEodReviewUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createEodReviewBody),
+  });
+};
+
+export const getCreateEodReviewMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createEodReview>>,
+    TError,
+    { data: BodyType<CreateEodReviewBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createEodReview>>,
+  TError,
+  { data: BodyType<CreateEodReviewBody> },
+  TContext
+> => {
+  const mutationKey = ["createEodReview"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createEodReview>>,
+    { data: BodyType<CreateEodReviewBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createEodReview(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateEodReviewMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createEodReview>>
+>;
+export type CreateEodReviewMutationBody = BodyType<CreateEodReviewBody>;
+export type CreateEodReviewMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Create an end-of-day review with AI analysis
+ */
+export const useCreateEodReview = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createEodReview>>,
+    TError,
+    { data: BodyType<CreateEodReviewBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createEodReview>>,
+  TError,
+  { data: BodyType<CreateEodReviewBody> },
+  TContext
+> => {
+  return useMutation(getCreateEodReviewMutationOptions(options));
+};
+
+/**
+ * @summary Get a specific end-of-day review
+ */
+export const getGetEodReviewUrl = (id: number) => {
+  return `/api/eod-reviews/${id}`;
+};
+
+export const getEodReview = async (
+  id: number,
+  options?: RequestInit,
+): Promise<EodReview> => {
+  return customFetch<EodReview>(getGetEodReviewUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetEodReviewQueryKey = (id: number) => {
+  return [`/api/eod-reviews/${id}`] as const;
+};
+
+export const getGetEodReviewQueryOptions = <
+  TData = Awaited<ReturnType<typeof getEodReview>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getEodReview>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetEodReviewQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getEodReview>>> = ({
+    signal,
+  }) => getEodReview(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getEodReview>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetEodReviewQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getEodReview>>
+>;
+export type GetEodReviewQueryError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Get a specific end-of-day review
+ */
+
+export function useGetEodReview<
+  TData = Awaited<ReturnType<typeof getEodReview>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getEodReview>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetEodReviewQueryOptions(id, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Delete an end-of-day review
+ */
+export const getDeleteEodReviewUrl = (id: number) => {
+  return `/api/eod-reviews/${id}`;
+};
+
+export const deleteEodReview = async (
+  id: number,
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(getDeleteEodReviewUrl(id), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getDeleteEodReviewMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteEodReview>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteEodReview>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  const mutationKey = ["deleteEodReview"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteEodReview>>,
+    { id: number }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return deleteEodReview(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteEodReviewMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteEodReview>>
+>;
+
+export type DeleteEodReviewMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Delete an end-of-day review
+ */
+export const useDeleteEodReview = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteEodReview>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deleteEodReview>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  return useMutation(getDeleteEodReviewMutationOptions(options));
+};
+
+/**
+ * @summary List all pre-day plans
+ */
+export const getListPreDayPlansUrl = (params?: ListPreDayPlansParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/pre-day-plans?${stringifiedParams}`
+    : `/api/pre-day-plans`;
+};
+
+export const listPreDayPlans = async (
+  params?: ListPreDayPlansParams,
+  options?: RequestInit,
+): Promise<PreDayPlan[]> => {
+  return customFetch<PreDayPlan[]>(getListPreDayPlansUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListPreDayPlansQueryKey = (params?: ListPreDayPlansParams) => {
+  return [`/api/pre-day-plans`, ...(params ? [params] : [])] as const;
+};
+
+export const getListPreDayPlansQueryOptions = <
+  TData = Awaited<ReturnType<typeof listPreDayPlans>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ListPreDayPlansParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listPreDayPlans>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListPreDayPlansQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listPreDayPlans>>> = ({
+    signal,
+  }) => listPreDayPlans(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listPreDayPlans>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListPreDayPlansQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listPreDayPlans>>
+>;
+export type ListPreDayPlansQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List all pre-day plans
+ */
+
+export function useListPreDayPlans<
+  TData = Awaited<ReturnType<typeof listPreDayPlans>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ListPreDayPlansParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listPreDayPlans>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListPreDayPlansQueryOptions(params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Create a pre-day plan with AI output
+ */
+export const getCreatePreDayPlanUrl = () => {
+  return `/api/pre-day-plans`;
+};
+
+export const createPreDayPlan = async (
+  createPreDayPlanBody: CreatePreDayPlanBody,
+  options?: RequestInit,
+): Promise<PreDayPlan> => {
+  return customFetch<PreDayPlan>(getCreatePreDayPlanUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createPreDayPlanBody),
+  });
+};
+
+export const getCreatePreDayPlanMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createPreDayPlan>>,
+    TError,
+    { data: BodyType<CreatePreDayPlanBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createPreDayPlan>>,
+  TError,
+  { data: BodyType<CreatePreDayPlanBody> },
+  TContext
+> => {
+  const mutationKey = ["createPreDayPlan"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createPreDayPlan>>,
+    { data: BodyType<CreatePreDayPlanBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createPreDayPlan(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreatePreDayPlanMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createPreDayPlan>>
+>;
+export type CreatePreDayPlanMutationBody = BodyType<CreatePreDayPlanBody>;
+export type CreatePreDayPlanMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Create a pre-day plan with AI output
+ */
+export const useCreatePreDayPlan = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createPreDayPlan>>,
+    TError,
+    { data: BodyType<CreatePreDayPlanBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createPreDayPlan>>,
+  TError,
+  { data: BodyType<CreatePreDayPlanBody> },
+  TContext
+> => {
+  return useMutation(getCreatePreDayPlanMutationOptions(options));
+};
+
+/**
+ * @summary Get a specific pre-day plan
+ */
+export const getGetPreDayPlanUrl = (id: number) => {
+  return `/api/pre-day-plans/${id}`;
+};
+
+export const getPreDayPlan = async (
+  id: number,
+  options?: RequestInit,
+): Promise<PreDayPlan> => {
+  return customFetch<PreDayPlan>(getGetPreDayPlanUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetPreDayPlanQueryKey = (id: number) => {
+  return [`/api/pre-day-plans/${id}`] as const;
+};
+
+export const getGetPreDayPlanQueryOptions = <
+  TData = Awaited<ReturnType<typeof getPreDayPlan>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getPreDayPlan>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetPreDayPlanQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getPreDayPlan>>> = ({
+    signal,
+  }) => getPreDayPlan(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getPreDayPlan>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetPreDayPlanQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getPreDayPlan>>
+>;
+export type GetPreDayPlanQueryError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Get a specific pre-day plan
+ */
+
+export function useGetPreDayPlan<
+  TData = Awaited<ReturnType<typeof getPreDayPlan>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getPreDayPlan>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetPreDayPlanQueryOptions(id, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Delete a pre-day plan
+ */
+export const getDeletePreDayPlanUrl = (id: number) => {
+  return `/api/pre-day-plans/${id}`;
+};
+
+export const deletePreDayPlan = async (
+  id: number,
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(getDeletePreDayPlanUrl(id), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getDeletePreDayPlanMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deletePreDayPlan>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deletePreDayPlan>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  const mutationKey = ["deletePreDayPlan"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deletePreDayPlan>>,
+    { id: number }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return deletePreDayPlan(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeletePreDayPlanMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deletePreDayPlan>>
+>;
+
+export type DeletePreDayPlanMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Delete a pre-day plan
+ */
+export const useDeletePreDayPlan = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deletePreDayPlan>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deletePreDayPlan>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  return useMutation(getDeletePreDayPlanMutationOptions(options));
+};
+
+/**
+ * @summary List all pre-week plans
+ */
+export const getListPreWeekPlansUrl = (params?: ListPreWeekPlansParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/pre-week-plans?${stringifiedParams}`
+    : `/api/pre-week-plans`;
+};
+
+export const listPreWeekPlans = async (
+  params?: ListPreWeekPlansParams,
+  options?: RequestInit,
+): Promise<PreWeekPlan[]> => {
+  return customFetch<PreWeekPlan[]>(getListPreWeekPlansUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListPreWeekPlansQueryKey = (
+  params?: ListPreWeekPlansParams,
+) => {
+  return [`/api/pre-week-plans`, ...(params ? [params] : [])] as const;
+};
+
+export const getListPreWeekPlansQueryOptions = <
+  TData = Awaited<ReturnType<typeof listPreWeekPlans>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ListPreWeekPlansParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listPreWeekPlans>>,
       TError,
       TData
     >;
@@ -177,43 +870,43 @@ export const getListDailyCheckinsQueryOptions = <
   const { query: queryOptions, request: requestOptions } = options ?? {};
 
   const queryKey =
-    queryOptions?.queryKey ?? getListDailyCheckinsQueryKey(params);
+    queryOptions?.queryKey ?? getListPreWeekPlansQueryKey(params);
 
   const queryFn: QueryFunction<
-    Awaited<ReturnType<typeof listDailyCheckins>>
-  > = ({ signal }) => listDailyCheckins(params, { signal, ...requestOptions });
+    Awaited<ReturnType<typeof listPreWeekPlans>>
+  > = ({ signal }) => listPreWeekPlans(params, { signal, ...requestOptions });
 
   return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof listDailyCheckins>>,
+    Awaited<ReturnType<typeof listPreWeekPlans>>,
     TError,
     TData
   > & { queryKey: QueryKey };
 };
 
-export type ListDailyCheckinsQueryResult = NonNullable<
-  Awaited<ReturnType<typeof listDailyCheckins>>
+export type ListPreWeekPlansQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listPreWeekPlans>>
 >;
-export type ListDailyCheckinsQueryError = ErrorType<unknown>;
+export type ListPreWeekPlansQueryError = ErrorType<unknown>;
 
 /**
- * @summary List all daily check-ins
+ * @summary List all pre-week plans
  */
 
-export function useListDailyCheckins<
-  TData = Awaited<ReturnType<typeof listDailyCheckins>>,
+export function useListPreWeekPlans<
+  TData = Awaited<ReturnType<typeof listPreWeekPlans>>,
   TError = ErrorType<unknown>,
 >(
-  params?: ListDailyCheckinsParams,
+  params?: ListPreWeekPlansParams,
   options?: {
     query?: UseQueryOptions<
-      Awaited<ReturnType<typeof listDailyCheckins>>,
+      Awaited<ReturnType<typeof listPreWeekPlans>>,
       TError,
       TData
     >;
     request?: SecondParameter<typeof customFetch>;
   },
 ): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-  const queryOptions = getListDailyCheckinsQueryOptions(params, options);
+  const queryOptions = getListPreWeekPlansQueryOptions(params, options);
 
   const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
     queryKey: QueryKey;
@@ -223,42 +916,42 @@ export function useListDailyCheckins<
 }
 
 /**
- * @summary Create a daily check-in with AI analysis
+ * @summary Create a pre-week plan with AI output
  */
-export const getCreateDailyCheckinUrl = () => {
-  return `/api/daily-checkins`;
+export const getCreatePreWeekPlanUrl = () => {
+  return `/api/pre-week-plans`;
 };
 
-export const createDailyCheckin = async (
-  createDailyCheckinBody: CreateDailyCheckinBody,
+export const createPreWeekPlan = async (
+  createPreWeekPlanBody: CreatePreWeekPlanBody,
   options?: RequestInit,
-): Promise<DailyCheckin> => {
-  return customFetch<DailyCheckin>(getCreateDailyCheckinUrl(), {
+): Promise<PreWeekPlan> => {
+  return customFetch<PreWeekPlan>(getCreatePreWeekPlanUrl(), {
     ...options,
     method: "POST",
     headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(createDailyCheckinBody),
+    body: JSON.stringify(createPreWeekPlanBody),
   });
 };
 
-export const getCreateDailyCheckinMutationOptions = <
+export const getCreatePreWeekPlanMutationOptions = <
   TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof createDailyCheckin>>,
+    Awaited<ReturnType<typeof createPreWeekPlan>>,
     TError,
-    { data: BodyType<CreateDailyCheckinBody> },
+    { data: BodyType<CreatePreWeekPlanBody> },
     TContext
   >;
   request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
-  Awaited<ReturnType<typeof createDailyCheckin>>,
+  Awaited<ReturnType<typeof createPreWeekPlan>>,
   TError,
-  { data: BodyType<CreateDailyCheckinBody> },
+  { data: BodyType<CreatePreWeekPlanBody> },
   TContext
 > => {
-  const mutationKey = ["createDailyCheckin"];
+  const mutationKey = ["createPreWeekPlan"];
   const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
@@ -268,75 +961,75 @@ export const getCreateDailyCheckinMutationOptions = <
     : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof createDailyCheckin>>,
-    { data: BodyType<CreateDailyCheckinBody> }
+    Awaited<ReturnType<typeof createPreWeekPlan>>,
+    { data: BodyType<CreatePreWeekPlanBody> }
   > = (props) => {
     const { data } = props ?? {};
 
-    return createDailyCheckin(data, requestOptions);
+    return createPreWeekPlan(data, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
 };
 
-export type CreateDailyCheckinMutationResult = NonNullable<
-  Awaited<ReturnType<typeof createDailyCheckin>>
+export type CreatePreWeekPlanMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createPreWeekPlan>>
 >;
-export type CreateDailyCheckinMutationBody = BodyType<CreateDailyCheckinBody>;
-export type CreateDailyCheckinMutationError = ErrorType<ErrorResponse>;
+export type CreatePreWeekPlanMutationBody = BodyType<CreatePreWeekPlanBody>;
+export type CreatePreWeekPlanMutationError = ErrorType<ErrorResponse>;
 
 /**
- * @summary Create a daily check-in with AI analysis
+ * @summary Create a pre-week plan with AI output
  */
-export const useCreateDailyCheckin = <
+export const useCreatePreWeekPlan = <
   TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof createDailyCheckin>>,
+    Awaited<ReturnType<typeof createPreWeekPlan>>,
     TError,
-    { data: BodyType<CreateDailyCheckinBody> },
+    { data: BodyType<CreatePreWeekPlanBody> },
     TContext
   >;
   request?: SecondParameter<typeof customFetch>;
 }): UseMutationResult<
-  Awaited<ReturnType<typeof createDailyCheckin>>,
+  Awaited<ReturnType<typeof createPreWeekPlan>>,
   TError,
-  { data: BodyType<CreateDailyCheckinBody> },
+  { data: BodyType<CreatePreWeekPlanBody> },
   TContext
 > => {
-  return useMutation(getCreateDailyCheckinMutationOptions(options));
+  return useMutation(getCreatePreWeekPlanMutationOptions(options));
 };
 
 /**
- * @summary Get a specific daily check-in
+ * @summary Get a specific pre-week plan
  */
-export const getGetDailyCheckinUrl = (id: number) => {
-  return `/api/daily-checkins/${id}`;
+export const getGetPreWeekPlanUrl = (id: number) => {
+  return `/api/pre-week-plans/${id}`;
 };
 
-export const getDailyCheckin = async (
+export const getPreWeekPlan = async (
   id: number,
   options?: RequestInit,
-): Promise<DailyCheckin> => {
-  return customFetch<DailyCheckin>(getGetDailyCheckinUrl(id), {
+): Promise<PreWeekPlan> => {
+  return customFetch<PreWeekPlan>(getGetPreWeekPlanUrl(id), {
     ...options,
     method: "GET",
   });
 };
 
-export const getGetDailyCheckinQueryKey = (id: number) => {
-  return [`/api/daily-checkins/${id}`] as const;
+export const getGetPreWeekPlanQueryKey = (id: number) => {
+  return [`/api/pre-week-plans/${id}`] as const;
 };
 
-export const getGetDailyCheckinQueryOptions = <
-  TData = Awaited<ReturnType<typeof getDailyCheckin>>,
+export const getGetPreWeekPlanQueryOptions = <
+  TData = Awaited<ReturnType<typeof getPreWeekPlan>>,
   TError = ErrorType<ErrorResponse>,
 >(
   id: number,
   options?: {
     query?: UseQueryOptions<
-      Awaited<ReturnType<typeof getDailyCheckin>>,
+      Awaited<ReturnType<typeof getPreWeekPlan>>,
       TError,
       TData
     >;
@@ -345,11 +1038,11 @@ export const getGetDailyCheckinQueryOptions = <
 ) => {
   const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getGetDailyCheckinQueryKey(id);
+  const queryKey = queryOptions?.queryKey ?? getGetPreWeekPlanQueryKey(id);
 
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getDailyCheckin>>> = ({
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getPreWeekPlan>>> = ({
     signal,
-  }) => getDailyCheckin(id, { signal, ...requestOptions });
+  }) => getPreWeekPlan(id, { signal, ...requestOptions });
 
   return {
     queryKey,
@@ -357,36 +1050,36 @@ export const getGetDailyCheckinQueryOptions = <
     enabled: !!id,
     ...queryOptions,
   } as UseQueryOptions<
-    Awaited<ReturnType<typeof getDailyCheckin>>,
+    Awaited<ReturnType<typeof getPreWeekPlan>>,
     TError,
     TData
   > & { queryKey: QueryKey };
 };
 
-export type GetDailyCheckinQueryResult = NonNullable<
-  Awaited<ReturnType<typeof getDailyCheckin>>
+export type GetPreWeekPlanQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getPreWeekPlan>>
 >;
-export type GetDailyCheckinQueryError = ErrorType<ErrorResponse>;
+export type GetPreWeekPlanQueryError = ErrorType<ErrorResponse>;
 
 /**
- * @summary Get a specific daily check-in
+ * @summary Get a specific pre-week plan
  */
 
-export function useGetDailyCheckin<
-  TData = Awaited<ReturnType<typeof getDailyCheckin>>,
+export function useGetPreWeekPlan<
+  TData = Awaited<ReturnType<typeof getPreWeekPlan>>,
   TError = ErrorType<ErrorResponse>,
 >(
   id: number,
   options?: {
     query?: UseQueryOptions<
-      Awaited<ReturnType<typeof getDailyCheckin>>,
+      Awaited<ReturnType<typeof getPreWeekPlan>>,
       TError,
       TData
     >;
     request?: SecondParameter<typeof customFetch>;
   },
 ): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-  const queryOptions = getGetDailyCheckinQueryOptions(id, options);
+  const queryOptions = getGetPreWeekPlanQueryOptions(id, options);
 
   const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
     queryKey: QueryKey;
@@ -396,40 +1089,40 @@ export function useGetDailyCheckin<
 }
 
 /**
- * @summary Delete a daily check-in
+ * @summary Delete a pre-week plan
  */
-export const getDeleteDailyCheckinUrl = (id: number) => {
-  return `/api/daily-checkins/${id}`;
+export const getDeletePreWeekPlanUrl = (id: number) => {
+  return `/api/pre-week-plans/${id}`;
 };
 
-export const deleteDailyCheckin = async (
+export const deletePreWeekPlan = async (
   id: number,
   options?: RequestInit,
 ): Promise<void> => {
-  return customFetch<void>(getDeleteDailyCheckinUrl(id), {
+  return customFetch<void>(getDeletePreWeekPlanUrl(id), {
     ...options,
     method: "DELETE",
   });
 };
 
-export const getDeleteDailyCheckinMutationOptions = <
+export const getDeletePreWeekPlanMutationOptions = <
   TError = ErrorType<unknown>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof deleteDailyCheckin>>,
+    Awaited<ReturnType<typeof deletePreWeekPlan>>,
     TError,
     { id: number },
     TContext
   >;
   request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
-  Awaited<ReturnType<typeof deleteDailyCheckin>>,
+  Awaited<ReturnType<typeof deletePreWeekPlan>>,
   TError,
   { id: number },
   TContext
 > => {
-  const mutationKey = ["deleteDailyCheckin"];
+  const mutationKey = ["deletePreWeekPlan"];
   const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
@@ -439,908 +1132,44 @@ export const getDeleteDailyCheckinMutationOptions = <
     : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof deleteDailyCheckin>>,
+    Awaited<ReturnType<typeof deletePreWeekPlan>>,
     { id: number }
   > = (props) => {
     const { id } = props ?? {};
 
-    return deleteDailyCheckin(id, requestOptions);
+    return deletePreWeekPlan(id, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
 };
 
-export type DeleteDailyCheckinMutationResult = NonNullable<
-  Awaited<ReturnType<typeof deleteDailyCheckin>>
+export type DeletePreWeekPlanMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deletePreWeekPlan>>
 >;
 
-export type DeleteDailyCheckinMutationError = ErrorType<unknown>;
+export type DeletePreWeekPlanMutationError = ErrorType<unknown>;
 
 /**
- * @summary Delete a daily check-in
+ * @summary Delete a pre-week plan
  */
-export const useDeleteDailyCheckin = <
+export const useDeletePreWeekPlan = <
   TError = ErrorType<unknown>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof deleteDailyCheckin>>,
+    Awaited<ReturnType<typeof deletePreWeekPlan>>,
     TError,
     { id: number },
     TContext
   >;
   request?: SecondParameter<typeof customFetch>;
 }): UseMutationResult<
-  Awaited<ReturnType<typeof deleteDailyCheckin>>,
+  Awaited<ReturnType<typeof deletePreWeekPlan>>,
   TError,
   { id: number },
   TContext
 > => {
-  return useMutation(getDeleteDailyCheckinMutationOptions(options));
-};
-
-/**
- * @summary List all weekly reviews
- */
-export const getListWeeklyReviewsUrl = (params?: ListWeeklyReviewsParams) => {
-  const normalizedParams = new URLSearchParams();
-
-  Object.entries(params || {}).forEach(([key, value]) => {
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? "null" : value.toString());
-    }
-  });
-
-  const stringifiedParams = normalizedParams.toString();
-
-  return stringifiedParams.length > 0
-    ? `/api/weekly-reviews?${stringifiedParams}`
-    : `/api/weekly-reviews`;
-};
-
-export const listWeeklyReviews = async (
-  params?: ListWeeklyReviewsParams,
-  options?: RequestInit,
-): Promise<WeeklyReview[]> => {
-  return customFetch<WeeklyReview[]>(getListWeeklyReviewsUrl(params), {
-    ...options,
-    method: "GET",
-  });
-};
-
-export const getListWeeklyReviewsQueryKey = (
-  params?: ListWeeklyReviewsParams,
-) => {
-  return [`/api/weekly-reviews`, ...(params ? [params] : [])] as const;
-};
-
-export const getListWeeklyReviewsQueryOptions = <
-  TData = Awaited<ReturnType<typeof listWeeklyReviews>>,
-  TError = ErrorType<unknown>,
->(
-  params?: ListWeeklyReviewsParams,
-  options?: {
-    query?: UseQueryOptions<
-      Awaited<ReturnType<typeof listWeeklyReviews>>,
-      TError,
-      TData
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {};
-
-  const queryKey =
-    queryOptions?.queryKey ?? getListWeeklyReviewsQueryKey(params);
-
-  const queryFn: QueryFunction<
-    Awaited<ReturnType<typeof listWeeklyReviews>>
-  > = ({ signal }) => listWeeklyReviews(params, { signal, ...requestOptions });
-
-  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof listWeeklyReviews>>,
-    TError,
-    TData
-  > & { queryKey: QueryKey };
-};
-
-export type ListWeeklyReviewsQueryResult = NonNullable<
-  Awaited<ReturnType<typeof listWeeklyReviews>>
->;
-export type ListWeeklyReviewsQueryError = ErrorType<unknown>;
-
-/**
- * @summary List all weekly reviews
- */
-
-export function useListWeeklyReviews<
-  TData = Awaited<ReturnType<typeof listWeeklyReviews>>,
-  TError = ErrorType<unknown>,
->(
-  params?: ListWeeklyReviewsParams,
-  options?: {
-    query?: UseQueryOptions<
-      Awaited<ReturnType<typeof listWeeklyReviews>>,
-      TError,
-      TData
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-  const queryOptions = getListWeeklyReviewsQueryOptions(params, options);
-
-  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
-    queryKey: QueryKey;
-  };
-
-  return { ...query, queryKey: queryOptions.queryKey };
-}
-
-/**
- * @summary Create a weekly review with AI analysis
- */
-export const getCreateWeeklyReviewUrl = () => {
-  return `/api/weekly-reviews`;
-};
-
-export const createWeeklyReview = async (
-  createWeeklyReviewBody: CreateWeeklyReviewBody,
-  options?: RequestInit,
-): Promise<WeeklyReview> => {
-  return customFetch<WeeklyReview>(getCreateWeeklyReviewUrl(), {
-    ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(createWeeklyReviewBody),
-  });
-};
-
-export const getCreateWeeklyReviewMutationOptions = <
-  TError = ErrorType<ErrorResponse>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof createWeeklyReview>>,
-    TError,
-    { data: BodyType<CreateWeeklyReviewBody> },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof createWeeklyReview>>,
-  TError,
-  { data: BodyType<CreateWeeklyReviewBody> },
-  TContext
-> => {
-  const mutationKey = ["createWeeklyReview"];
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof createWeeklyReview>>,
-    { data: BodyType<CreateWeeklyReviewBody> }
-  > = (props) => {
-    const { data } = props ?? {};
-
-    return createWeeklyReview(data, requestOptions);
-  };
-
-  return { mutationFn, ...mutationOptions };
-};
-
-export type CreateWeeklyReviewMutationResult = NonNullable<
-  Awaited<ReturnType<typeof createWeeklyReview>>
->;
-export type CreateWeeklyReviewMutationBody = BodyType<CreateWeeklyReviewBody>;
-export type CreateWeeklyReviewMutationError = ErrorType<ErrorResponse>;
-
-/**
- * @summary Create a weekly review with AI analysis
- */
-export const useCreateWeeklyReview = <
-  TError = ErrorType<ErrorResponse>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof createWeeklyReview>>,
-    TError,
-    { data: BodyType<CreateWeeklyReviewBody> },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationResult<
-  Awaited<ReturnType<typeof createWeeklyReview>>,
-  TError,
-  { data: BodyType<CreateWeeklyReviewBody> },
-  TContext
-> => {
-  return useMutation(getCreateWeeklyReviewMutationOptions(options));
-};
-
-/**
- * @summary Get a specific weekly review
- */
-export const getGetWeeklyReviewUrl = (id: number) => {
-  return `/api/weekly-reviews/${id}`;
-};
-
-export const getWeeklyReview = async (
-  id: number,
-  options?: RequestInit,
-): Promise<WeeklyReview> => {
-  return customFetch<WeeklyReview>(getGetWeeklyReviewUrl(id), {
-    ...options,
-    method: "GET",
-  });
-};
-
-export const getGetWeeklyReviewQueryKey = (id: number) => {
-  return [`/api/weekly-reviews/${id}`] as const;
-};
-
-export const getGetWeeklyReviewQueryOptions = <
-  TData = Awaited<ReturnType<typeof getWeeklyReview>>,
-  TError = ErrorType<ErrorResponse>,
->(
-  id: number,
-  options?: {
-    query?: UseQueryOptions<
-      Awaited<ReturnType<typeof getWeeklyReview>>,
-      TError,
-      TData
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {};
-
-  const queryKey = queryOptions?.queryKey ?? getGetWeeklyReviewQueryKey(id);
-
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof getWeeklyReview>>> = ({
-    signal,
-  }) => getWeeklyReview(id, { signal, ...requestOptions });
-
-  return {
-    queryKey,
-    queryFn,
-    enabled: !!id,
-    ...queryOptions,
-  } as UseQueryOptions<
-    Awaited<ReturnType<typeof getWeeklyReview>>,
-    TError,
-    TData
-  > & { queryKey: QueryKey };
-};
-
-export type GetWeeklyReviewQueryResult = NonNullable<
-  Awaited<ReturnType<typeof getWeeklyReview>>
->;
-export type GetWeeklyReviewQueryError = ErrorType<ErrorResponse>;
-
-/**
- * @summary Get a specific weekly review
- */
-
-export function useGetWeeklyReview<
-  TData = Awaited<ReturnType<typeof getWeeklyReview>>,
-  TError = ErrorType<ErrorResponse>,
->(
-  id: number,
-  options?: {
-    query?: UseQueryOptions<
-      Awaited<ReturnType<typeof getWeeklyReview>>,
-      TError,
-      TData
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-  const queryOptions = getGetWeeklyReviewQueryOptions(id, options);
-
-  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
-    queryKey: QueryKey;
-  };
-
-  return { ...query, queryKey: queryOptions.queryKey };
-}
-
-/**
- * @summary Delete a weekly review
- */
-export const getDeleteWeeklyReviewUrl = (id: number) => {
-  return `/api/weekly-reviews/${id}`;
-};
-
-export const deleteWeeklyReview = async (
-  id: number,
-  options?: RequestInit,
-): Promise<void> => {
-  return customFetch<void>(getDeleteWeeklyReviewUrl(id), {
-    ...options,
-    method: "DELETE",
-  });
-};
-
-export const getDeleteWeeklyReviewMutationOptions = <
-  TError = ErrorType<unknown>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof deleteWeeklyReview>>,
-    TError,
-    { id: number },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof deleteWeeklyReview>>,
-  TError,
-  { id: number },
-  TContext
-> => {
-  const mutationKey = ["deleteWeeklyReview"];
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof deleteWeeklyReview>>,
-    { id: number }
-  > = (props) => {
-    const { id } = props ?? {};
-
-    return deleteWeeklyReview(id, requestOptions);
-  };
-
-  return { mutationFn, ...mutationOptions };
-};
-
-export type DeleteWeeklyReviewMutationResult = NonNullable<
-  Awaited<ReturnType<typeof deleteWeeklyReview>>
->;
-
-export type DeleteWeeklyReviewMutationError = ErrorType<unknown>;
-
-/**
- * @summary Delete a weekly review
- */
-export const useDeleteWeeklyReview = <
-  TError = ErrorType<unknown>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof deleteWeeklyReview>>,
-    TError,
-    { id: number },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationResult<
-  Awaited<ReturnType<typeof deleteWeeklyReview>>,
-  TError,
-  { id: number },
-  TContext
-> => {
-  return useMutation(getDeleteWeeklyReviewMutationOptions(options));
-};
-
-/**
- * @summary List all active metrics
- */
-export const getListMetricsUrl = () => {
-  return `/api/metrics`;
-};
-
-export const listMetrics = async (options?: RequestInit): Promise<Metric[]> => {
-  return customFetch<Metric[]>(getListMetricsUrl(), {
-    ...options,
-    method: "GET",
-  });
-};
-
-export const getListMetricsQueryKey = () => {
-  return [`/api/metrics`] as const;
-};
-
-export const getListMetricsQueryOptions = <
-  TData = Awaited<ReturnType<typeof listMetrics>>,
-  TError = ErrorType<unknown>,
->(options?: {
-  query?: UseQueryOptions<
-    Awaited<ReturnType<typeof listMetrics>>,
-    TError,
-    TData
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {};
-
-  const queryKey = queryOptions?.queryKey ?? getListMetricsQueryKey();
-
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof listMetrics>>> = ({
-    signal,
-  }) => listMetrics({ signal, ...requestOptions });
-
-  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof listMetrics>>,
-    TError,
-    TData
-  > & { queryKey: QueryKey };
-};
-
-export type ListMetricsQueryResult = NonNullable<
-  Awaited<ReturnType<typeof listMetrics>>
->;
-export type ListMetricsQueryError = ErrorType<unknown>;
-
-/**
- * @summary List all active metrics
- */
-
-export function useListMetrics<
-  TData = Awaited<ReturnType<typeof listMetrics>>,
-  TError = ErrorType<unknown>,
->(options?: {
-  query?: UseQueryOptions<
-    Awaited<ReturnType<typeof listMetrics>>,
-    TError,
-    TData
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-  const queryOptions = getListMetricsQueryOptions(options);
-
-  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
-    queryKey: QueryKey;
-  };
-
-  return { ...query, queryKey: queryOptions.queryKey };
-}
-
-/**
- * @summary Create a new metric
- */
-export const getCreateMetricUrl = () => {
-  return `/api/metrics`;
-};
-
-export const createMetric = async (
-  createMetricBody: CreateMetricBody,
-  options?: RequestInit,
-): Promise<Metric> => {
-  return customFetch<Metric>(getCreateMetricUrl(), {
-    ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(createMetricBody),
-  });
-};
-
-export const getCreateMetricMutationOptions = <
-  TError = ErrorType<ErrorResponse>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof createMetric>>,
-    TError,
-    { data: BodyType<CreateMetricBody> },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof createMetric>>,
-  TError,
-  { data: BodyType<CreateMetricBody> },
-  TContext
-> => {
-  const mutationKey = ["createMetric"];
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof createMetric>>,
-    { data: BodyType<CreateMetricBody> }
-  > = (props) => {
-    const { data } = props ?? {};
-
-    return createMetric(data, requestOptions);
-  };
-
-  return { mutationFn, ...mutationOptions };
-};
-
-export type CreateMetricMutationResult = NonNullable<
-  Awaited<ReturnType<typeof createMetric>>
->;
-export type CreateMetricMutationBody = BodyType<CreateMetricBody>;
-export type CreateMetricMutationError = ErrorType<ErrorResponse>;
-
-/**
- * @summary Create a new metric
- */
-export const useCreateMetric = <
-  TError = ErrorType<ErrorResponse>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof createMetric>>,
-    TError,
-    { data: BodyType<CreateMetricBody> },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationResult<
-  Awaited<ReturnType<typeof createMetric>>,
-  TError,
-  { data: BodyType<CreateMetricBody> },
-  TContext
-> => {
-  return useMutation(getCreateMetricMutationOptions(options));
-};
-
-/**
- * @summary Update a metric
- */
-export const getUpdateMetricUrl = (id: number) => {
-  return `/api/metrics/${id}`;
-};
-
-export const updateMetric = async (
-  id: number,
-  updateMetricBody: UpdateMetricBody,
-  options?: RequestInit,
-): Promise<Metric> => {
-  return customFetch<Metric>(getUpdateMetricUrl(id), {
-    ...options,
-    method: "PATCH",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(updateMetricBody),
-  });
-};
-
-export const getUpdateMetricMutationOptions = <
-  TError = ErrorType<ErrorResponse>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof updateMetric>>,
-    TError,
-    { id: number; data: BodyType<UpdateMetricBody> },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof updateMetric>>,
-  TError,
-  { id: number; data: BodyType<UpdateMetricBody> },
-  TContext
-> => {
-  const mutationKey = ["updateMetric"];
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof updateMetric>>,
-    { id: number; data: BodyType<UpdateMetricBody> }
-  > = (props) => {
-    const { id, data } = props ?? {};
-
-    return updateMetric(id, data, requestOptions);
-  };
-
-  return { mutationFn, ...mutationOptions };
-};
-
-export type UpdateMetricMutationResult = NonNullable<
-  Awaited<ReturnType<typeof updateMetric>>
->;
-export type UpdateMetricMutationBody = BodyType<UpdateMetricBody>;
-export type UpdateMetricMutationError = ErrorType<ErrorResponse>;
-
-/**
- * @summary Update a metric
- */
-export const useUpdateMetric = <
-  TError = ErrorType<ErrorResponse>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof updateMetric>>,
-    TError,
-    { id: number; data: BodyType<UpdateMetricBody> },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationResult<
-  Awaited<ReturnType<typeof updateMetric>>,
-  TError,
-  { id: number; data: BodyType<UpdateMetricBody> },
-  TContext
-> => {
-  return useMutation(getUpdateMetricMutationOptions(options));
-};
-
-/**
- * @summary Delete a metric
- */
-export const getDeleteMetricUrl = (id: number) => {
-  return `/api/metrics/${id}`;
-};
-
-export const deleteMetric = async (
-  id: number,
-  options?: RequestInit,
-): Promise<void> => {
-  return customFetch<void>(getDeleteMetricUrl(id), {
-    ...options,
-    method: "DELETE",
-  });
-};
-
-export const getDeleteMetricMutationOptions = <
-  TError = ErrorType<unknown>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof deleteMetric>>,
-    TError,
-    { id: number },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof deleteMetric>>,
-  TError,
-  { id: number },
-  TContext
-> => {
-  const mutationKey = ["deleteMetric"];
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof deleteMetric>>,
-    { id: number }
-  > = (props) => {
-    const { id } = props ?? {};
-
-    return deleteMetric(id, requestOptions);
-  };
-
-  return { mutationFn, ...mutationOptions };
-};
-
-export type DeleteMetricMutationResult = NonNullable<
-  Awaited<ReturnType<typeof deleteMetric>>
->;
-
-export type DeleteMetricMutationError = ErrorType<unknown>;
-
-/**
- * @summary Delete a metric
- */
-export const useDeleteMetric = <
-  TError = ErrorType<unknown>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof deleteMetric>>,
-    TError,
-    { id: number },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationResult<
-  Awaited<ReturnType<typeof deleteMetric>>,
-  TError,
-  { id: number },
-  TContext
-> => {
-  return useMutation(getDeleteMetricMutationOptions(options));
-};
-
-/**
- * @summary Get metric logs for a specific date
- */
-export const getListMetricLogsUrl = (params: ListMetricLogsParams) => {
-  const normalizedParams = new URLSearchParams();
-
-  Object.entries(params || {}).forEach(([key, value]) => {
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? "null" : value.toString());
-    }
-  });
-
-  const stringifiedParams = normalizedParams.toString();
-
-  return stringifiedParams.length > 0
-    ? `/api/metric-logs?${stringifiedParams}`
-    : `/api/metric-logs`;
-};
-
-export const listMetricLogs = async (
-  params: ListMetricLogsParams,
-  options?: RequestInit,
-): Promise<MetricLogEntry[]> => {
-  return customFetch<MetricLogEntry[]>(getListMetricLogsUrl(params), {
-    ...options,
-    method: "GET",
-  });
-};
-
-export const getListMetricLogsQueryKey = (params?: ListMetricLogsParams) => {
-  return [`/api/metric-logs`, ...(params ? [params] : [])] as const;
-};
-
-export const getListMetricLogsQueryOptions = <
-  TData = Awaited<ReturnType<typeof listMetricLogs>>,
-  TError = ErrorType<ErrorResponse>,
->(
-  params: ListMetricLogsParams,
-  options?: {
-    query?: UseQueryOptions<
-      Awaited<ReturnType<typeof listMetricLogs>>,
-      TError,
-      TData
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {};
-
-  const queryKey = queryOptions?.queryKey ?? getListMetricLogsQueryKey(params);
-
-  const queryFn: QueryFunction<Awaited<ReturnType<typeof listMetricLogs>>> = ({
-    signal,
-  }) => listMetricLogs(params, { signal, ...requestOptions });
-
-  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof listMetricLogs>>,
-    TError,
-    TData
-  > & { queryKey: QueryKey };
-};
-
-export type ListMetricLogsQueryResult = NonNullable<
-  Awaited<ReturnType<typeof listMetricLogs>>
->;
-export type ListMetricLogsQueryError = ErrorType<ErrorResponse>;
-
-/**
- * @summary Get metric logs for a specific date
- */
-
-export function useListMetricLogs<
-  TData = Awaited<ReturnType<typeof listMetricLogs>>,
-  TError = ErrorType<ErrorResponse>,
->(
-  params: ListMetricLogsParams,
-  options?: {
-    query?: UseQueryOptions<
-      Awaited<ReturnType<typeof listMetricLogs>>,
-      TError,
-      TData
-    >;
-    request?: SecondParameter<typeof customFetch>;
-  },
-): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-  const queryOptions = getListMetricLogsQueryOptions(params, options);
-
-  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
-    queryKey: QueryKey;
-  };
-
-  return { ...query, queryKey: queryOptions.queryKey };
-}
-
-/**
- * @summary Save metric log entries for a date (upsert)
- */
-export const getSaveMetricLogsUrl = () => {
-  return `/api/metric-logs`;
-};
-
-export const saveMetricLogs = async (
-  saveMetricLogsBody: SaveMetricLogsBody,
-  options?: RequestInit,
-): Promise<MetricLog[]> => {
-  return customFetch<MetricLog[]>(getSaveMetricLogsUrl(), {
-    ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(saveMetricLogsBody),
-  });
-};
-
-export const getSaveMetricLogsMutationOptions = <
-  TError = ErrorType<ErrorResponse>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof saveMetricLogs>>,
-    TError,
-    { data: BodyType<SaveMetricLogsBody> },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof saveMetricLogs>>,
-  TError,
-  { data: BodyType<SaveMetricLogsBody> },
-  TContext
-> => {
-  const mutationKey = ["saveMetricLogs"];
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof saveMetricLogs>>,
-    { data: BodyType<SaveMetricLogsBody> }
-  > = (props) => {
-    const { data } = props ?? {};
-
-    return saveMetricLogs(data, requestOptions);
-  };
-
-  return { mutationFn, ...mutationOptions };
-};
-
-export type SaveMetricLogsMutationResult = NonNullable<
-  Awaited<ReturnType<typeof saveMetricLogs>>
->;
-export type SaveMetricLogsMutationBody = BodyType<SaveMetricLogsBody>;
-export type SaveMetricLogsMutationError = ErrorType<ErrorResponse>;
-
-/**
- * @summary Save metric log entries for a date (upsert)
- */
-export const useSaveMetricLogs = <
-  TError = ErrorType<ErrorResponse>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof saveMetricLogs>>,
-    TError,
-    { data: BodyType<SaveMetricLogsBody> },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationResult<
-  Awaited<ReturnType<typeof saveMetricLogs>>,
-  TError,
-  { data: BodyType<SaveMetricLogsBody> },
-  TContext
-> => {
-  return useMutation(getSaveMetricLogsMutationOptions(options));
+  return useMutation(getDeletePreWeekPlanMutationOptions(options));
 };
 
 /**
@@ -1417,250 +1246,3 @@ export function useGetOperatorStats<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
-
-/**
- * @summary Get recent metric trends (last 7 check-ins)
- */
-export const getGetOperatorTrendsUrl = () => {
-  return `/api/operator/trends`;
-};
-
-export const getOperatorTrends = async (
-  options?: RequestInit,
-): Promise<TrendPoint[]> => {
-  return customFetch<TrendPoint[]>(getGetOperatorTrendsUrl(), {
-    ...options,
-    method: "GET",
-  });
-};
-
-export const getGetOperatorTrendsQueryKey = () => {
-  return [`/api/operator/trends`] as const;
-};
-
-export const getGetOperatorTrendsQueryOptions = <
-  TData = Awaited<ReturnType<typeof getOperatorTrends>>,
-  TError = ErrorType<unknown>,
->(options?: {
-  query?: UseQueryOptions<
-    Awaited<ReturnType<typeof getOperatorTrends>>,
-    TError,
-    TData
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}) => {
-  const { query: queryOptions, request: requestOptions } = options ?? {};
-
-  const queryKey = queryOptions?.queryKey ?? getGetOperatorTrendsQueryKey();
-
-  const queryFn: QueryFunction<
-    Awaited<ReturnType<typeof getOperatorTrends>>
-  > = ({ signal }) => getOperatorTrends({ signal, ...requestOptions });
-
-  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getOperatorTrends>>,
-    TError,
-    TData
-  > & { queryKey: QueryKey };
-};
-
-export type GetOperatorTrendsQueryResult = NonNullable<
-  Awaited<ReturnType<typeof getOperatorTrends>>
->;
-export type GetOperatorTrendsQueryError = ErrorType<unknown>;
-
-/**
- * @summary Get recent metric trends (last 7 check-ins)
- */
-
-export function useGetOperatorTrends<
-  TData = Awaited<ReturnType<typeof getOperatorTrends>>,
-  TError = ErrorType<unknown>,
->(options?: {
-  query?: UseQueryOptions<
-    Awaited<ReturnType<typeof getOperatorTrends>>,
-    TError,
-    TData
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-  const queryOptions = getGetOperatorTrendsQueryOptions(options);
-
-  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
-    queryKey: QueryKey;
-  };
-
-  return { ...query, queryKey: queryOptions.queryKey };
-}
-
-/**
- * @summary Get a Claude reflection for a set of notes/metrics
- */
-export const getOperatorReflectUrl = () => {
-  return `/api/operator/reflect`;
-};
-
-export const operatorReflect = async (
-  reflectRequest: ReflectRequest,
-  options?: RequestInit,
-): Promise<ReflectResponse> => {
-  return customFetch<ReflectResponse>(getOperatorReflectUrl(), {
-    ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(reflectRequest),
-  });
-};
-
-export const getOperatorReflectMutationOptions = <
-  TError = ErrorType<ErrorResponse>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof operatorReflect>>,
-    TError,
-    { data: BodyType<ReflectRequest> },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof operatorReflect>>,
-  TError,
-  { data: BodyType<ReflectRequest> },
-  TContext
-> => {
-  const mutationKey = ["operatorReflect"];
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof operatorReflect>>,
-    { data: BodyType<ReflectRequest> }
-  > = (props) => {
-    const { data } = props ?? {};
-
-    return operatorReflect(data, requestOptions);
-  };
-
-  return { mutationFn, ...mutationOptions };
-};
-
-export type OperatorReflectMutationResult = NonNullable<
-  Awaited<ReturnType<typeof operatorReflect>>
->;
-export type OperatorReflectMutationBody = BodyType<ReflectRequest>;
-export type OperatorReflectMutationError = ErrorType<ErrorResponse>;
-
-/**
- * @summary Get a Claude reflection for a set of notes/metrics
- */
-export const useOperatorReflect = <
-  TError = ErrorType<ErrorResponse>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof operatorReflect>>,
-    TError,
-    { data: BodyType<ReflectRequest> },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationResult<
-  Awaited<ReturnType<typeof operatorReflect>>,
-  TError,
-  { data: BodyType<ReflectRequest> },
-  TContext
-> => {
-  return useMutation(getOperatorReflectMutationOptions(options));
-};
-
-/**
- * @summary Get an OpenAI tomorrow plan for a set of notes/metrics
- */
-export const getOperatorPlanUrl = () => {
-  return `/api/operator/plan`;
-};
-
-export const operatorPlan = async (
-  planRequest: PlanRequest,
-  options?: RequestInit,
-): Promise<PlanResponse> => {
-  return customFetch<PlanResponse>(getOperatorPlanUrl(), {
-    ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(planRequest),
-  });
-};
-
-export const getOperatorPlanMutationOptions = <
-  TError = ErrorType<ErrorResponse>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof operatorPlan>>,
-    TError,
-    { data: BodyType<PlanRequest> },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationOptions<
-  Awaited<ReturnType<typeof operatorPlan>>,
-  TError,
-  { data: BodyType<PlanRequest> },
-  TContext
-> => {
-  const mutationKey = ["operatorPlan"];
-  const { mutation: mutationOptions, request: requestOptions } = options
-    ? options.mutation &&
-      "mutationKey" in options.mutation &&
-      options.mutation.mutationKey
-      ? options
-      : { ...options, mutation: { ...options.mutation, mutationKey } }
-    : { mutation: { mutationKey }, request: undefined };
-
-  const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof operatorPlan>>,
-    { data: BodyType<PlanRequest> }
-  > = (props) => {
-    const { data } = props ?? {};
-
-    return operatorPlan(data, requestOptions);
-  };
-
-  return { mutationFn, ...mutationOptions };
-};
-
-export type OperatorPlanMutationResult = NonNullable<
-  Awaited<ReturnType<typeof operatorPlan>>
->;
-export type OperatorPlanMutationBody = BodyType<PlanRequest>;
-export type OperatorPlanMutationError = ErrorType<ErrorResponse>;
-
-/**
- * @summary Get an OpenAI tomorrow plan for a set of notes/metrics
- */
-export const useOperatorPlan = <
-  TError = ErrorType<ErrorResponse>,
-  TContext = unknown,
->(options?: {
-  mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof operatorPlan>>,
-    TError,
-    { data: BodyType<PlanRequest> },
-    TContext
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseMutationResult<
-  Awaited<ReturnType<typeof operatorPlan>>,
-  TError,
-  { data: BodyType<PlanRequest> },
-  TContext
-> => {
-  return useMutation(getOperatorPlanMutationOptions(options));
-};

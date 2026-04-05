@@ -3,7 +3,7 @@
  * Do not edit manually.
  * Api
  * API specification for Operator - personal life OS
- * OpenAPI spec version: 0.1.0
+ * OpenAPI spec version: 0.2.0
  */
 export interface HealthStatus {
   status: string;
@@ -13,305 +13,144 @@ export interface ErrorResponse {
   error: string;
 }
 
-export interface DailyCheckin {
+export interface EodReview {
   id: number;
   date: string;
-  notes: string;
-  energyLevel: number;
-  focusLevel: number;
-  healthLevel: number;
-  sleepQuality: number;
-  mood: number;
-  tasksCompleted: string;
-  tasksMissed: string;
+  /** @nullable */
+  sleepHours: number | null;
+  /** @nullable */
+  sleepScore: number | null;
+  /** @nullable */
+  calories: number | null;
+  /** @nullable */
+  proteinG: number | null;
+  /** @nullable */
+  carbsG: number | null;
+  /** @nullable */
+  fatG: number | null;
+  /** @nullable */
+  waterOz: number | null;
+  /** @nullable */
+  steps: number | null;
+  /** @nullable */
+  workoutCompleted: boolean | null;
+  /** @nullable */
+  workoutType: string | null;
   /** @nullable */
   habitsCompleted: string | null;
   /** @nullable */
-  symptomsNotes: string | null;
+  tasksPlanned: number | null;
   /** @nullable */
-  claudeReflection: string | null;
+  tasksCompleted: number | null;
   /** @nullable */
-  openaiPlan: string | null;
+  tasksMissed: number | null;
   /** @nullable */
-  combinedAdvice: string | null;
+  calendarCommitments: string | null;
+  /** @nullable */
+  healthNotes: string | null;
+  /** @nullable */
+  reflection: string | null;
+  /** @nullable */
+  aiInsight: string | null;
+  /** @nullable */
+  aiTomorrow: string | null;
   createdAt: string;
 }
 
-export interface CreateDailyCheckinBody {
+export interface CreateEodReviewBody {
   date: string;
-  notes: string;
-  energyLevel: number;
-  focusLevel: number;
-  healthLevel: number;
-  sleepQuality: number;
-  mood: number;
-  tasksCompleted: string;
-  tasksMissed: string;
-  /** @nullable */
-  habitsCompleted?: string | null;
-  /** @nullable */
-  symptomsNotes?: string | null;
+  sleepHours?: number;
+  sleepScore?: number;
+  calories?: number;
+  proteinG?: number;
+  carbsG?: number;
+  fatG?: number;
+  waterOz?: number;
+  steps?: number;
+  workoutCompleted?: boolean;
+  workoutType?: string;
+  habitsCompleted?: string;
+  tasksPlanned?: number;
+  tasksCompleted?: number;
+  tasksMissed?: number;
+  calendarCommitments?: string;
+  healthNotes?: string;
+  reflection?: string;
 }
 
-export interface WeeklyReview {
+export interface PreDayPlan {
+  id: number;
+  date: string;
+  /** @nullable */
+  tasksPlanned: string | null;
+  /** @nullable */
+  calendarCommitments: string | null;
+  /** @nullable */
+  energyNote: string | null;
+  /** @nullable */
+  aiPlan: string | null;
+  /** @nullable */
+  aiContext: string | null;
+  createdAt: string;
+}
+
+export interface CreatePreDayPlanBody {
+  date: string;
+  tasksPlanned?: string;
+  calendarCommitments?: string;
+  energyNote?: string;
+}
+
+export interface PreWeekPlan {
   id: number;
   weekStartDate: string;
-  weekNotes: string;
-  mainWins: string;
-  mainFrustrations: string;
-  energyTrend: string;
-  healthTrend: string;
-  goalsNextWeek: string;
-  existingCommitments: string;
   /** @nullable */
-  claudeReflection: string | null;
+  goals: string | null;
   /** @nullable */
-  openaiPlan: string | null;
+  calendarCommitments: string | null;
   /** @nullable */
-  combinedAdvice: string | null;
+  capacityNote: string | null;
+  /** @nullable */
+  reflection: string | null;
+  /** @nullable */
+  aiPlan: string | null;
+  /** @nullable */
+  aiContext: string | null;
   createdAt: string;
 }
 
-export interface CreateWeeklyReviewBody {
+export interface CreatePreWeekPlanBody {
   weekStartDate: string;
-  weekNotes: string;
-  mainWins: string;
-  mainFrustrations: string;
-  energyTrend: string;
-  healthTrend: string;
-  goalsNextWeek: string;
-  existingCommitments: string;
+  goals?: string;
+  calendarCommitments?: string;
+  capacityNote?: string;
+  reflection?: string;
 }
 
 export interface OperatorStats {
-  totalCheckins: number;
-  totalWeeklyReviews: number;
+  totalEodReviews: number;
+  totalDayPlans: number;
+  totalWeekPlans: number;
   /** @nullable */
-  avgEnergy: number | null;
+  lastEodDate: string | null;
   /** @nullable */
-  avgFocus: number | null;
+  lastDayPlanDate: string | null;
   /** @nullable */
-  avgMood: number | null;
-  /** @nullable */
-  avgSleep: number | null;
-  /** @nullable */
-  avgHealth: number | null;
-  /** @nullable */
-  lastCheckinDate: string | null;
-  /** @nullable */
-  lastWeeklyReviewDate: string | null;
+  lastWeekPlanDate: string | null;
   streakDays: number;
 }
 
-export interface TrendPoint {
-  date: string;
-  energy: number;
-  focus: number;
-  mood: number;
-  sleep: number;
-  health: number;
-}
-
-export interface ReflectRequest {
-  notes: string;
-  energyLevel?: number;
-  focusLevel?: number;
-  healthLevel?: number;
-  sleepQuality?: number;
-  mood?: number;
-  tasksCompleted?: string;
-  tasksMissed?: string;
-  habitsCompleted?: string;
-  symptomsNotes?: string;
-}
-
-export interface ReflectResponse {
-  reflection: string;
-}
-
-export interface PlanRequest {
-  notes: string;
-  energyLevel?: number;
-  focusLevel?: number;
-  healthLevel?: number;
-  sleepQuality?: number;
-  mood?: number;
-  tasksCompleted?: string;
-  tasksMissed?: string;
-  goalsNextWeek?: string;
-  existingCommitments?: string;
-}
-
-export interface PlanResponse {
-  plan: string;
-}
-
-export type MetricType = (typeof MetricType)[keyof typeof MetricType];
-
-export const MetricType = {
-  number: "number",
-  checkbox: "checkbox",
-  toggle: "toggle",
-  dropdown: "dropdown",
-  text: "text",
-} as const;
-
-export type MetricCategory =
-  (typeof MetricCategory)[keyof typeof MetricCategory];
-
-export const MetricCategory = {
-  Recovery: "Recovery",
-  Nutrition: "Nutrition",
-  Activity: "Activity",
-  Productivity: "Productivity",
-  Custom: "Custom",
-} as const;
-
-export interface Metric {
-  id: number;
-  name: string;
-  type: MetricType;
-  category: MetricCategory;
-  /** @nullable */
-  targetValue: string | null;
-  /** @nullable */
-  importanceLevel: number | null;
-  sortOrder: number;
-  isActive: boolean;
-  createdAt: string;
-}
-
-export type CreateMetricBodyType =
-  (typeof CreateMetricBodyType)[keyof typeof CreateMetricBodyType];
-
-export const CreateMetricBodyType = {
-  number: "number",
-  checkbox: "checkbox",
-  toggle: "toggle",
-  dropdown: "dropdown",
-  text: "text",
-} as const;
-
-export type CreateMetricBodyCategory =
-  (typeof CreateMetricBodyCategory)[keyof typeof CreateMetricBodyCategory];
-
-export const CreateMetricBodyCategory = {
-  Recovery: "Recovery",
-  Nutrition: "Nutrition",
-  Activity: "Activity",
-  Productivity: "Productivity",
-  Custom: "Custom",
-} as const;
-
-export interface CreateMetricBody {
-  name: string;
-  type: CreateMetricBodyType;
-  category: CreateMetricBodyCategory;
-  /** @nullable */
-  targetValue?: string | null;
-  /** @nullable */
-  importanceLevel?: number | null;
-  /** @nullable */
-  sortOrder?: number | null;
-}
-
-export type UpdateMetricBodyType =
-  (typeof UpdateMetricBodyType)[keyof typeof UpdateMetricBodyType];
-
-export const UpdateMetricBodyType = {
-  number: "number",
-  checkbox: "checkbox",
-  toggle: "toggle",
-  dropdown: "dropdown",
-  text: "text",
-} as const;
-
-export type UpdateMetricBodyCategory =
-  (typeof UpdateMetricBodyCategory)[keyof typeof UpdateMetricBodyCategory];
-
-export const UpdateMetricBodyCategory = {
-  Recovery: "Recovery",
-  Nutrition: "Nutrition",
-  Activity: "Activity",
-  Productivity: "Productivity",
-  Custom: "Custom",
-} as const;
-
-export interface UpdateMetricBody {
-  name?: string;
-  type?: UpdateMetricBodyType;
-  category?: UpdateMetricBodyCategory;
-  /** @nullable */
-  targetValue?: string | null;
-  /** @nullable */
-  importanceLevel?: number | null;
-  /** @nullable */
-  sortOrder?: number | null;
-  /** @nullable */
-  isActive?: boolean | null;
-}
-
-export interface MetricLog {
-  id: number;
-  date: string;
-  metricId: number;
-  value: string;
-  createdAt: string;
-}
-
-export type MetricLogEntryMetricType =
-  (typeof MetricLogEntryMetricType)[keyof typeof MetricLogEntryMetricType];
-
-export const MetricLogEntryMetricType = {
-  number: "number",
-  checkbox: "checkbox",
-  toggle: "toggle",
-  dropdown: "dropdown",
-  text: "text",
-} as const;
-
-export type MetricLogEntryMetricCategory =
-  (typeof MetricLogEntryMetricCategory)[keyof typeof MetricLogEntryMetricCategory];
-
-export const MetricLogEntryMetricCategory = {
-  Recovery: "Recovery",
-  Nutrition: "Nutrition",
-  Activity: "Activity",
-  Productivity: "Productivity",
-  Custom: "Custom",
-} as const;
-
-export interface MetricLogEntry {
-  id: number;
-  date: string;
-  metricId: number;
-  value: string;
-  createdAt: string;
-  metricName: string;
-  metricType: MetricLogEntryMetricType;
-  metricCategory: MetricLogEntryMetricCategory;
-}
-
-export interface MetricLogInput {
-  metricId: number;
-  value: string;
-}
-
-export interface SaveMetricLogsBody {
-  date: string;
-  entries: MetricLogInput[];
-}
-
-export type ListDailyCheckinsParams = {
+export type ListEodReviewsParams = {
   limit?: number;
   offset?: number;
 };
 
-export type ListWeeklyReviewsParams = {
+export type ListPreDayPlansParams = {
   limit?: number;
   offset?: number;
 };
 
-export type ListMetricLogsParams = {
-  date: string;
+export type ListPreWeekPlansParams = {
+  limit?: number;
+  offset?: number;
 };

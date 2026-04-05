@@ -3,10 +3,10 @@
  * Do not edit manually.
  * Api
  * API specification for Operator - personal life OS
- * OpenAPI spec version: 0.1.0
+ * OpenAPI spec version: 0.2.0
  */
 
-export interface MetricLogInput {
-  metricId: number;
-  value: string;
-}
+export type ListPreDayPlansParams = {
+  limit?: number;
+  offset?: number;
+};

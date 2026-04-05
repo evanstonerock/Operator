@@ -1,15 +1,15 @@
 import { Link, useLocation } from "wouter";
-import { Calendar, History, CheckCircle2, LayoutDashboard, Settings2 } from "lucide-react";
+import { Moon, CalendarCheck, CalendarDays, History, LayoutDashboard } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
 
   const navigation = [
-    { name: "Daily Check-In", href: "/", icon: CheckCircle2 },
-    { name: "Weekly Review", href: "/weekly", icon: Calendar },
+    { name: "End of Day", href: "/", icon: Moon },
+    { name: "Pre-Day Plan", href: "/pre-day", icon: CalendarCheck },
+    { name: "Pre-Week Plan", href: "/pre-week", icon: CalendarDays },
     { name: "History", href: "/history", icon: History },
-    { name: "Settings", href: "/settings", icon: Settings2 },
   ];
 
   return (

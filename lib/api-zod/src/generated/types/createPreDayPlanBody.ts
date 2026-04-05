@@ -6,6 +6,9 @@
  * OpenAPI spec version: 0.2.0
  */
 
-export interface HealthStatus {
-  status: string;
+export interface CreatePreDayPlanBody {
+  date: string;
+  tasksPlanned?: string;
+  calendarCommitments?: string;
+  energyNote?: string;
 }
