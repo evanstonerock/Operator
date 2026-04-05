@@ -1,0 +1,228 @@
+Build a clean modern web app called Operator.
+
+Purpose:
+Operator is a personal life operating system for post-grad life. The app should help the user understand why a day was productive or unproductive, what to do tomorrow, and how to plan the week better using personal data.
+
+Main concept:
+This app combines two AI roles:
+- Claude = deeper reflection, pattern analysis, honest explanation
+- OpenAI = structured planning, practical next steps, action-oriented output
+
+Important product rule:
+Do not make this app bloated. Keep the architecture clean, modular, and understandable. Prioritize a working MVP over extra features.
+
+Tech stack:
+- Next.js
+- React
+- TypeScript
+- Tailwind CSS
+- Node.js API routes
+- Clean modular file structure
+- Ready to run on Replit
+- Store secrets only in environment variables
+
+Environment variables:
+- OPENAI_API_KEY
+- ANTHROPIC_API_KEY
+
+Pages:
+1. Daily Check-In
+2. Weekly Review
+3. History
+
+Navigation:
+- Simple top navigation or sidebar
+- Easy switching between pages
+- Minimal dashboard feel
+
+================================
+1. DAILY CHECK-IN PAGE
+================================
+
+Create a form with these fields:
+- Notes about the day (large text area)
+- Energy level (1–10)
+- Focus level (1–10)
+- Health / sickness level (1–10)
+- Sleep quality (1–10)
+- Mood (1–10)
+- Tasks completed (text area or list input)
+- Tasks missed (text area or list input)
+- Optional habits completed
+- Optional symptoms or sickness notes
+
+Submit behavior:
+When the form is submitted:
+1. Send the daily check-in data to Claude first
+2. Claude should return a reflective analysis that explains:
+   - why the day was productive or unproductive
+   - likely causes, patterns, or behavior issues
+   - what felt off or what went right
+   - one key insight from the day
+3. Then send the original user data plus Claude’s reflection to OpenAI
+4. OpenAI should return a structured plan for tomorrow with:
+   - top priority
+   - 3 key actions
+   - suggested time-block plan
+   - one thing to avoid
+   - short summary of the ideal tone or goal for tomorrow
+
+Output sections on the page:
+- Claude Reflection
+- OpenAI Tomorrow Plan
+- Best Combined Advice
+
+Best Combined Advice:
+Create a short merged summary that combines Claude’s insight with OpenAI’s practical planning into one useful final recommendation.
+
+Daily output rules:
+- Keep advice specific to the entered data
+- Do not give generic motivational fluff
+- Keep output readable in a dashboard
+- Claude should feel insightful and honest
+- OpenAI should feel clear and action-oriented
+
+================================
+2. WEEKLY REVIEW PAGE
+================================
+
+Create a weekly review form with these fields:
+- Weekly notes
+- Main wins
+- Main frustrations
+- Energy trend
+- Health trend
+- Goals for next week
+- Existing commitments
+
+Weekly workflow:
+1. Send the weekly data to Claude
+2. Claude should return:
+   - deeper weekly reflection
+   - patterns across the week
+   - likely reasons the week felt good, bad, or inconsistent
+   - what underlying issue may be affecting productivity or recovery
+3. Send the weekly data plus Claude’s reflection to OpenAI
+4. OpenAI should return a structured next-week plan including:
+   - focus days
+   - admin days
+   - recovery days
+   - weekly priorities
+   - risks to avoid
+
+Weekly output sections:
+- Claude Weekly Reflection
+- OpenAI Weekly Plan
+- Combined Weekly Advice
+
+================================
+3. HISTORY PAGE
+================================
+
+Requirements:
+- Save past daily check-ins and weekly reviews
+- Show saved entries in clean cards
+- Allow viewing:
+  - original inputs
+  - Claude reflections
+  - OpenAI plans
+  - combined advice
+- Start simple with local storage or a lightweight persistence method
+- Organize history clearly by date
+
+================================
+UI / DESIGN REQUIREMENTS
+================================
+
+Design style:
+- Minimal
+- Modern
+- Premium but simple
+- Dark mode friendly
+- Responsive for desktop and mobile
+- Clear spacing and readable typography
+- Use cards for sections
+- Clear loading states
+- Clear error states
+- Good form styling
+- Avoid clutter
+
+Dashboard behavior:
+- Keep screens readable
+- Do not overcrowd with analytics
+- Focus on useful outputs, not flashy visuals
+
+================================
+CODE / ENGINEERING REQUIREMENTS
+================================
+
+Code quality:
+- Clean, readable, modular code
+- Reusable components
+- Separate frontend and backend logic
+- Use API routes for OpenAI and Anthropic calls
+- Do not hardcode API keys
+- Add comments where helpful
+- Make the project easy to extend later
+
+Project structure:
+- components/
+- app/ or pages/
+- lib/
+- api routes or server routes
+- utils/
+- clear separation of concerns
+
+AI route requirements:
+- Create one route for Claude analysis
+- Create one route for OpenAI planning
+- Create one route or helper for combined advice if needed
+- Handle loading, errors, and invalid API responses safely
+
+Prompt design requirements:
+- Claude prompt should be reflective, analytical, honest, and pattern-focused
+- OpenAI prompt should be structured, concise, practical, and action-focused
+- Both should avoid vague generic responses
+
+================================
+FUTURE-READY EXTENSIONS
+================================
+
+Do not fully build these now, but structure the app so they can be added later:
+- Google Calendar integration
+- Note uploads
+- Habit tracker integration
+- Health / sickness tracker expansion
+- Long-term pattern analysis
+- Weekly calendar suggestions
+
+================================
+README REQUIREMENTS
+================================
+
+Include a README with:
+- what the app does
+- how to run it in Replit
+- required environment variables
+- how the Claude/OpenAI workflow works
+- how data is saved
+- where to later add integrations
+
+================================
+VERY IMPORTANT SCOPE CONTROL
+================================
+
+Do not overbuild this app.
+
+If there is any risk of making the project too complex, prioritize only this MVP:
+
+MVP:
+- Daily Check-In page
+- Claude Reflection output
+- OpenAI Tomorrow Plan output
+- Best Combined Advice
+- History page with saved daily entries
+
+Only after the MVP is clean and working should Weekly Review be added.
+
+Keep the app understandable, maintainable, and realistic for one person to extend later.
