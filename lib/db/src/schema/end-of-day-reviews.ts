@@ -22,15 +22,15 @@ export const endOfDayReviewsTable = pgTable("end_of_day_reviews", {
   calendarCommitments: text("calendar_commitments"),
   healthNotes: text("health_notes"),
   reflection: text("reflection"),
-  aiInsight: text("ai_insight"),
-  aiTomorrow: text("ai_tomorrow"),
+  aiAnalysis: text("ai_analysis"),
+  aiPlan: text("ai_plan"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
 export const insertEndOfDayReviewSchema = createInsertSchema(endOfDayReviewsTable).omit({
   id: true,
-  aiInsight: true,
-  aiTomorrow: true,
+  aiAnalysis: true,
+  aiPlan: true,
   createdAt: true,
 });
 

@@ -44,8 +44,8 @@ export interface EodReview {
   /** @nullable */
   reflection: string | null;
   /** @nullable */
-  aiInsight: string | null;
+  aiAnalysis: string | null;
   /** @nullable */
-  aiTomorrow: string | null;
+  aiPlan: string | null;
   createdAt: string;
 }

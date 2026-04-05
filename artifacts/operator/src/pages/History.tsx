@@ -78,7 +78,7 @@ function EodCard({ review }: { readonly review: EodReview }) {
             </AccordionItem>
           )}
 
-          {(review.aiInsight || review.aiTomorrow) && (
+          {(review.aiAnalysis || review.aiPlan) && (
             <AccordionItem value="ai" className="border-b-0 px-6">
               <AccordionTrigger className="hover:no-underline py-4">
                 <span className="font-medium flex items-center gap-2 text-sm text-amber-400">
@@ -86,19 +86,19 @@ function EodCard({ review }: { readonly review: EodReview }) {
                 </span>
               </AccordionTrigger>
               <AccordionContent className="pb-4 space-y-4">
-                {review.aiInsight && (
+                {review.aiAnalysis && (
                   <div>
                     <p className="text-xs font-semibold text-amber-400 uppercase tracking-wide mb-2">Day Insight</p>
                     <div className="bg-amber-950/20 border border-amber-800/30 p-4 rounded-md text-sm whitespace-pre-wrap">
-                      {review.aiInsight}
+                      {review.aiAnalysis}
                     </div>
                   </div>
                 )}
-                {review.aiTomorrow && (
+                {review.aiPlan && (
                   <div>
                     <p className="text-xs font-semibold text-blue-400 uppercase tracking-wide mb-2">Tomorrow</p>
                     <div className="bg-blue-950/20 border border-blue-800/30 p-4 rounded-md text-sm whitespace-pre-wrap">
-                      {review.aiTomorrow}
+                      {review.aiPlan}
                     </div>
                   </div>
                 )}

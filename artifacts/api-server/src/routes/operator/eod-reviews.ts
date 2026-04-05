@@ -37,8 +37,8 @@ router.post("/", async (req, res) => {
 
     const userContext = buildContext(data);
 
-    // Step 1: Claude — day insight (drivers, patterns, prediction)
-    let aiInsight = "";
+    // Step 1: Claude — day analysis (drivers, patterns, prediction)
+    let aiAnalysis = "";
     try {
       const claudeMsg = await anthropic.messages.create({
         model: "claude-sonnet-4-6",
@@ -60,14 +60,14 @@ Keep it under 400 words. Be direct. Avoid generic statements.`,
         ],
       });
       const block = claudeMsg.content[0];
-      aiInsight = block.type === "text" ? block.text : "";
+      aiAnalysis = block.type === "text" ? block.text : "";
     } catch (err) {
-      req.log.error({ err }, "Claude EOD insight failed");
-      aiInsight = "Unable to generate insight at this time.";
+      req.log.error({ err }, "Claude EOD analysis failed");
+      aiAnalysis = "Unable to generate analysis at this time.";
     }
 
-    // Step 2: OpenAI — tomorrow recommendation
-    let aiTomorrow = "";
+    // Step 2: OpenAI — tomorrow plan
+    let aiPlan = "";
     try {
       const planResponse = await openai.chat.completions.create({
         model: "gpt-4o",
@@ -81,7 +81,7 @@ TODAY'S DATA:
 ${userContext}
 
 ANALYST'S INSIGHT:
-${aiInsight}
+${aiAnalysis}
 
 Respond with exactly these sections (plain text, no markdown):
 
@@ -101,10 +101,10 @@ OPTIMAL TONE:
           },
         ],
       });
-      aiTomorrow = planResponse.choices[0]?.message?.content ?? "";
+      aiPlan = planResponse.choices[0]?.message?.content ?? "";
     } catch (err) {
       req.log.error({ err }, "OpenAI tomorrow plan failed");
-      aiTomorrow = "Unable to generate tomorrow plan at this time.";
+      aiPlan = "Unable to generate tomorrow plan at this time.";
     }
 
     const [created] = await db
@@ -128,8 +128,8 @@ OPTIMAL TONE:
         calendarCommitments: data.calendarCommitments ?? null,
         healthNotes: data.healthNotes ?? null,
         reflection: data.reflection ?? null,
-        aiInsight,
-        aiTomorrow,
+        aiAnalysis,
+        aiPlan,
       })
       .returning();
 
@@ -213,8 +213,8 @@ function formatReview(r: typeof endOfDayReviewsTable.$inferSelect) {
     calendarCommitments: r.calendarCommitments,
     healthNotes: r.healthNotes,
     reflection: r.reflection,
-    aiInsight: r.aiInsight,
-    aiTomorrow: r.aiTomorrow,
+    aiAnalysis: r.aiAnalysis,
+    aiPlan: r.aiPlan,
     createdAt: r.createdAt.toISOString(),
   };
 }

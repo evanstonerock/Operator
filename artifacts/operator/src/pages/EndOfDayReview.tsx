@@ -166,7 +166,7 @@ export default function EndOfDayReviewPage() {
           title="Day Insight"
           icon={<Brain className="h-5 w-5" />}
           iconClass="text-amber-400"
-          content={result.aiInsight}
+          content={result.aiAnalysis}
           bg="bg-amber-950/20"
           border="border-amber-800/30"
         />
@@ -175,7 +175,7 @@ export default function EndOfDayReviewPage() {
           title="Tomorrow"
           icon={<Sparkles className="h-5 w-5" />}
           iconClass="text-blue-400"
-          content={result.aiTomorrow}
+          content={result.aiPlan}
           bg="bg-blue-950/20"
           border="border-blue-800/30"
         />

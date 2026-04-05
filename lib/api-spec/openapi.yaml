@@ -366,9 +366,9 @@ components:
           type: ["string", "null"]
         reflection:
           type: ["string", "null"]
-        aiInsight:
+        aiAnalysis:
           type: ["string", "null"]
-        aiTomorrow:
+        aiPlan:
           type: ["string", "null"]
         createdAt:
           type: string
@@ -392,8 +392,8 @@ components:
         - calendarCommitments
         - healthNotes
         - reflection
-        - aiInsight
-        - aiTomorrow
+        - aiAnalysis
+        - aiPlan
         - createdAt
 
     CreateEodReviewBody:

@@ -46,8 +46,8 @@ export const ListEodReviewsResponseItem = zod.object({
   calendarCommitments: zod.string().nullable(),
   healthNotes: zod.string().nullable(),
   reflection: zod.string().nullable(),
-  aiInsight: zod.string().nullable(),
-  aiTomorrow: zod.string().nullable(),
+  aiAnalysis: zod.string().nullable(),
+  aiPlan: zod.string().nullable(),
   createdAt: zod.string(),
 });
 export const ListEodReviewsResponse = zod.array(ListEodReviewsResponseItem);
@@ -103,8 +103,8 @@ export const GetEodReviewResponse = zod.object({
   calendarCommitments: zod.string().nullable(),
   healthNotes: zod.string().nullable(),
   reflection: zod.string().nullable(),
-  aiInsight: zod.string().nullable(),
-  aiTomorrow: zod.string().nullable(),
+  aiAnalysis: zod.string().nullable(),
+  aiPlan: zod.string().nullable(),
   createdAt: zod.string(),
 });
 
