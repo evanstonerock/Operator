@@ -3,13 +3,19 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: API specification for Operator - personal life OS
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: daily-checkins
+    description: Daily check-in operations
+  - name: weekly-reviews
+    description: Weekly review operations
+  - name: operator-ai
+    description: AI analysis and planning operations
 paths:
   /healthz:
     get:
@@ -24,6 +30,209 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /daily-checkins:
+    get:
+      operationId: listDailyCheckins
+      tags: [daily-checkins]
+      summary: List all daily check-ins
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: List of daily check-ins
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DailyCheckin"
+    post:
+      operationId: createDailyCheckin
+      tags: [daily-checkins]
+      summary: Create a daily check-in with AI analysis
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateDailyCheckinBody"
+      responses:
+        "201":
+          description: Created daily check-in with AI outputs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DailyCheckin"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /daily-checkins/{id}:
+    get:
+      operationId: getDailyCheckin
+      tags: [daily-checkins]
+      summary: Get a specific daily check-in
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Daily check-in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DailyCheckin"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteDailyCheckin
+      tags: [daily-checkins]
+      summary: Delete a daily check-in
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /weekly-reviews:
+    get:
+      operationId: listWeeklyReviews
+      tags: [weekly-reviews]
+      summary: List all weekly reviews
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: List of weekly reviews
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/WeeklyReview"
+    post:
+      operationId: createWeeklyReview
+      tags: [weekly-reviews]
+      summary: Create a weekly review with AI analysis
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateWeeklyReviewBody"
+      responses:
+        "201":
+          description: Created weekly review with AI outputs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WeeklyReview"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /weekly-reviews/{id}:
+    get:
+      operationId: getWeeklyReview
+      tags: [weekly-reviews]
+      summary: Get a specific weekly review
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Weekly review
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WeeklyReview"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteWeeklyReview
+      tags: [weekly-reviews]
+      summary: Delete a weekly review
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /operator/stats:
+    get:
+      operationId: getOperatorStats
+      tags: [operator-ai]
+      summary: Get overall stats summary
+      responses:
+        "200":
+          description: Stats summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OperatorStats"
+
+  /operator/trends:
+    get:
+      operationId: getOperatorTrends
+      tags: [operator-ai]
+      summary: Get recent metric trends (last 7 check-ins)
+      responses:
+        "200":
+          description: Trend data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TrendPoint"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +243,230 @@ components:
       required:
         - status
 
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+
+    DailyCheckin:
+      type: object
+      properties:
+        id:
+          type: integer
+        date:
+          type: string
+        notes:
+          type: string
+        energyLevel:
+          type: integer
+        focusLevel:
+          type: integer
+        healthLevel:
+          type: integer
+        sleepQuality:
+          type: integer
+        mood:
+          type: integer
+        tasksCompleted:
+          type: string
+        tasksMissed:
+          type: string
+        habitsCompleted:
+          type: ["string", "null"]
+        symptomsNotes:
+          type: ["string", "null"]
+        claudeReflection:
+          type: ["string", "null"]
+        openaiPlan:
+          type: ["string", "null"]
+        combinedAdvice:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+      required:
+        - id
+        - date
+        - notes
+        - energyLevel
+        - focusLevel
+        - healthLevel
+        - sleepQuality
+        - mood
+        - tasksCompleted
+        - tasksMissed
+        - habitsCompleted
+        - symptomsNotes
+        - claudeReflection
+        - openaiPlan
+        - combinedAdvice
+        - createdAt
+
+    CreateDailyCheckinBody:
+      type: object
+      properties:
+        date:
+          type: string
+        notes:
+          type: string
+        energyLevel:
+          type: integer
+        focusLevel:
+          type: integer
+        healthLevel:
+          type: integer
+        sleepQuality:
+          type: integer
+        mood:
+          type: integer
+        tasksCompleted:
+          type: string
+        tasksMissed:
+          type: string
+        habitsCompleted:
+          type: ["string", "null"]
+        symptomsNotes:
+          type: ["string", "null"]
+      required:
+        - date
+        - notes
+        - energyLevel
+        - focusLevel
+        - healthLevel
+        - sleepQuality
+        - mood
+        - tasksCompleted
+        - tasksMissed
+
+    WeeklyReview:
+      type: object
+      properties:
+        id:
+          type: integer
+        weekStartDate:
+          type: string
+        weekNotes:
+          type: string
+        mainWins:
+          type: string
+        mainFrustrations:
+          type: string
+        energyTrend:
+          type: string
+        healthTrend:
+          type: string
+        goalsNextWeek:
+          type: string
+        existingCommitments:
+          type: string
+        claudeReflection:
+          type: ["string", "null"]
+        openaiPlan:
+          type: ["string", "null"]
+        combinedAdvice:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+      required:
+        - id
+        - weekStartDate
+        - weekNotes
+        - mainWins
+        - mainFrustrations
+        - energyTrend
+        - healthTrend
+        - goalsNextWeek
+        - existingCommitments
+        - claudeReflection
+        - openaiPlan
+        - combinedAdvice
+        - createdAt
+
+    CreateWeeklyReviewBody:
+      type: object
+      properties:
+        weekStartDate:
+          type: string
+        weekNotes:
+          type: string
+        mainWins:
+          type: string
+        mainFrustrations:
+          type: string
+        energyTrend:
+          type: string
+        healthTrend:
+          type: string
+        goalsNextWeek:
+          type: string
+        existingCommitments:
+          type: string
+      required:
+        - weekStartDate
+        - weekNotes
+        - mainWins
+        - mainFrustrations
+        - energyTrend
+        - healthTrend
+        - goalsNextWeek
+        - existingCommitments
+
+    OperatorStats:
+      type: object
+      properties:
+        totalCheckins:
+          type: integer
+        totalWeeklyReviews:
+          type: integer
+        avgEnergy:
+          type: ["number", "null"]
+        avgFocus:
+          type: ["number", "null"]
+        avgMood:
+          type: ["number", "null"]
+        avgSleep:
+          type: ["number", "null"]
+        avgHealth:
+          type: ["number", "null"]
+        lastCheckinDate:
+          type: ["string", "null"]
+        lastWeeklyReviewDate:
+          type: ["string", "null"]
+        streakDays:
+          type: integer
+      required:
+        - totalCheckins
+        - totalWeeklyReviews
+        - avgEnergy
+        - avgFocus
+        - avgMood
+        - avgSleep
+        - avgHealth
+        - lastCheckinDate
+        - lastWeeklyReviewDate
+        - streakDays
+
+    TrendPoint:
+      type: object
+      properties:
+        date:
+          type: string
+        energy:
+          type: integer
+        focus:
+          type: integer
+        mood:
+          type: integer
+        sleep:
+          type: integer
+        health:
+          type: integer
+      required:
+        - date
+        - energy
+        - focus
+        - mood
+        - sleep
+        - health
