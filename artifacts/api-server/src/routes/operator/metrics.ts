@@ -5,7 +5,22 @@ import { eq } from "drizzle-orm";
 const router = Router();
 
 const VALID_TYPES = ["number", "checkbox", "text", "duration", "scale"];
-const VALID_CATEGORIES = ["Recovery", "Nutrition", "Activity", "Productivity", "Custom"];
+const VALID_CATEGORIES = [
+  "Recovery",
+  "Health",
+  "Fitness",
+  "Nutrition",
+  "Work",
+  "Study",
+  "Finance",
+  "Social",
+  "Skill",
+  "Art",
+  "Morning",
+  "Day",
+  "Evening",
+  "Custom",
+];
 
 // GET /api/metrics
 router.get("/", async (req, res) => {

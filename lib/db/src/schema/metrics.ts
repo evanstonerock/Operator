@@ -12,9 +12,18 @@ export const metricTypeEnum = pgEnum("metric_type", [
 
 export const metricCategoryEnum = pgEnum("metric_category", [
   "Recovery",
+  "Health",
+  "Fitness",
   "Nutrition",
-  "Activity",
-  "Productivity",
+  "Work",
+  "Study",
+  "Finance",
+  "Social",
+  "Skill",
+  "Art",
+  "Morning",
+  "Day",
+  "Evening",
   "Custom",
 ]);
 

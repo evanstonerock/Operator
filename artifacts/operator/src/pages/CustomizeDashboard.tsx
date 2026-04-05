@@ -52,7 +52,23 @@ import {
 } from "lucide-react";
 
 const METRIC_TYPES = ["number", "checkbox", "text", "duration", "scale"] as const;
-const CATEGORIES = ["Recovery", "Nutrition", "Activity", "Productivity", "Custom"] as const;
+
+const CATEGORIES = [
+  "Recovery",
+  "Health",
+  "Fitness",
+  "Nutrition",
+  "Work",
+  "Study",
+  "Finance",
+  "Social",
+  "Skill",
+  "Art",
+  "Morning",
+  "Day",
+  "Evening",
+  "Custom",
+] as const;
 
 const TYPE_COLORS: Record<string, string> = {
   number: "bg-blue-500/10 text-blue-400 border-blue-500/20",
@@ -64,17 +80,35 @@ const TYPE_COLORS: Record<string, string> = {
 
 const CATEGORY_COLORS: Record<string, string> = {
   Recovery: "bg-cyan-500/10 text-cyan-400",
+  Health: "bg-red-500/10 text-red-400",
+  Fitness: "bg-orange-500/10 text-orange-400",
   Nutrition: "bg-lime-500/10 text-lime-400",
-  Activity: "bg-yellow-500/10 text-yellow-400",
-  Productivity: "bg-violet-500/10 text-violet-400",
-  Custom: "bg-pink-500/10 text-pink-400",
+  Work: "bg-blue-500/10 text-blue-400",
+  Study: "bg-indigo-500/10 text-indigo-400",
+  Finance: "bg-emerald-500/10 text-emerald-400",
+  Social: "bg-pink-500/10 text-pink-400",
+  Skill: "bg-violet-500/10 text-violet-400",
+  Art: "bg-fuchsia-500/10 text-fuchsia-400",
+  Morning: "bg-amber-500/10 text-amber-400",
+  Day: "bg-yellow-500/10 text-yellow-400",
+  Evening: "bg-purple-500/10 text-purple-400",
+  Custom: "bg-gray-500/10 text-gray-400",
 };
 
 const CATEGORY_ICONS: Record<string, string> = {
   Recovery: "💤",
+  Health: "❤️",
+  Fitness: "💪",
   Nutrition: "🥗",
-  Activity: "🏃",
-  Productivity: "🎯",
+  Work: "💼",
+  Study: "📚",
+  Finance: "💰",
+  Social: "🫂",
+  Skill: "🛠️",
+  Art: "🎨",
+  Morning: "🌅",
+  Day: "☀️",
+  Evening: "🌙",
   Custom: "⚡",
 };
 
@@ -98,7 +132,7 @@ type MetricForm = {
 const EMPTY_FORM: MetricForm = {
   name: "",
   type: "number",
-  category: "Productivity",
+  category: "Work",
   unit: "",
   targetValue: "",
   aiContext: "",
