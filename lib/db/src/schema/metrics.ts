@@ -2,8 +2,21 @@ import { pgTable, serial, text, integer, boolean, timestamp, pgEnum, unique } fr
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
-export const metricTypeEnum = pgEnum("metric_type", ["number", "checkbox", "toggle", "dropdown", "text", "duration", "scale"]);
-export const metricCategoryEnum = pgEnum("metric_category", ["Recovery", "Nutrition", "Activity", "Productivity", "Custom"]);
+export const metricTypeEnum = pgEnum("metric_type", [
+  "number",
+  "checkbox",
+  "text",
+  "duration",
+  "scale",
+]);
+
+export const metricCategoryEnum = pgEnum("metric_category", [
+  "Recovery",
+  "Nutrition",
+  "Activity",
+  "Productivity",
+  "Custom",
+]);
 
 export const metricsTable = pgTable("metrics", {
   id: serial("id").primaryKey(),
@@ -20,15 +33,23 @@ export const metricsTable = pgTable("metrics", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
-export const metricLogsTable = pgTable("metric_logs", {
-  id: serial("id").primaryKey(),
-  date: text("date").notNull(),
-  metricId: integer("metric_id").notNull().references(() => metricsTable.id, { onDelete: "cascade" }),
-  value: text("value").notNull(),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-}, (table) => [
-  unique("metric_logs_date_metric_id_unique").on(table.date, table.metricId),
-]);
+export const metricLogsTable = pgTable(
+  "metric_logs",
+  {
+    id: serial("id").primaryKey(),
+    date: text("date").notNull(),
+    metricId: integer("metric_id")
+      .notNull()
+      .references(() => metricsTable.id, { onDelete: "cascade" }),
+    value: text("value").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    unique("metric_logs_date_metric_id_unique").on(table.date, table.metricId),
+  ],
+);
 
 export const insertMetricSchema = createInsertSchema(metricsTable).omit({
   id: true,

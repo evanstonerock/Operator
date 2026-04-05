@@ -4,7 +4,7 @@ import { eq } from "drizzle-orm";
 
 const router = Router();
 
-const VALID_TYPES = ["number", "checkbox", "toggle", "dropdown", "text", "duration", "scale"];
+const VALID_TYPES = ["number", "checkbox", "text", "duration", "scale"];
 const VALID_CATEGORIES = ["Recovery", "Nutrition", "Activity", "Productivity", "Custom"];
 
 // GET /api/metrics
@@ -15,6 +15,7 @@ router.get("/", async (req, res) => {
       .from(metricsTable)
       .where(eq(metricsTable.isActive, true))
       .orderBy(metricsTable.displayOrder, metricsTable.sortOrder, metricsTable.id);
+
     res.json(metrics.map(formatMetric));
   } catch (err) {
     req.log.error({ err }, "Failed to list metrics");
@@ -24,31 +25,49 @@ router.get("/", async (req, res) => {
 
 // POST /api/metrics
 router.post("/", async (req, res) => {
-  const { name, type, category, unit, targetValue, aiContext, importanceLevel, sortOrder, displayOrder } = req.body;
+  const {
+    name,
+    type,
+    category,
+    unit,
+    targetValue,
+    aiContext,
+    importanceLevel,
+    sortOrder,
+    displayOrder,
+  } = req.body;
+
   if (!name || !type || !category) {
     res.status(400).json({ error: "name, type, and category are required" });
     return;
   }
+
   if (!VALID_TYPES.includes(type)) {
     res.status(400).json({ error: `type must be one of: ${VALID_TYPES.join(", ")}` });
     return;
   }
+
   if (!VALID_CATEGORIES.includes(category)) {
     res.status(400).json({ error: `category must be one of: ${VALID_CATEGORIES.join(", ")}` });
     return;
   }
+
   try {
-    const [created] = await db.insert(metricsTable).values({
-      name,
-      type,
-      category,
-      unit: unit ?? null,
-      targetValue: targetValue ?? null,
-      aiContext: aiContext ?? null,
-      importanceLevel: importanceLevel ?? null,
-      sortOrder: sortOrder ?? 0,
-      displayOrder: displayOrder ?? 0,
-    }).returning();
+    const [created] = await db
+      .insert(metricsTable)
+      .values({
+        name,
+        type,
+        category,
+        unit: unit ?? null,
+        targetValue: targetValue ?? null,
+        aiContext: aiContext ?? null,
+        importanceLevel: importanceLevel ?? null,
+        sortOrder: sortOrder ?? 0,
+        displayOrder: displayOrder ?? 0,
+      })
+      .returning();
+
     res.status(201).json(formatMetric(created));
   } catch (err) {
     req.log.error({ err }, "Failed to create metric");
@@ -59,12 +78,24 @@ router.post("/", async (req, res) => {
 // PATCH /api/metrics/:id
 router.patch("/:id", async (req, res) => {
   const id = Number(req.params.id);
-  const { name, type, category, unit, targetValue, aiContext, importanceLevel, sortOrder, displayOrder, isActive } = req.body;
+  const {
+    name,
+    type,
+    category,
+    unit,
+    targetValue,
+    aiContext,
+    importanceLevel,
+    sortOrder,
+    displayOrder,
+    isActive,
+  } = req.body;
 
   if (type && !VALID_TYPES.includes(type)) {
     res.status(400).json({ error: `type must be one of: ${VALID_TYPES.join(", ")}` });
     return;
   }
+
   if (category && !VALID_CATEGORIES.includes(category)) {
     res.status(400).json({ error: `category must be one of: ${VALID_CATEGORIES.join(", ")}` });
     return;
@@ -83,11 +114,17 @@ router.patch("/:id", async (req, res) => {
     if (displayOrder !== undefined) updates.displayOrder = displayOrder;
     if (isActive !== undefined) updates.isActive = isActive;
 
-    const [updated] = await db.update(metricsTable).set(updates).where(eq(metricsTable.id, id)).returning();
+    const [updated] = await db
+      .update(metricsTable)
+      .set(updates)
+      .where(eq(metricsTable.id, id))
+      .returning();
+
     if (!updated) {
       res.status(404).json({ error: "Metric not found" });
       return;
     }
+
     res.json(formatMetric(updated));
   } catch (err) {
     req.log.error({ err }, "Failed to update metric");
@@ -98,6 +135,7 @@ router.patch("/:id", async (req, res) => {
 // DELETE /api/metrics/:id
 router.delete("/:id", async (req, res) => {
   const id = Number(req.params.id);
+
   try {
     await db.delete(metricsTable).where(eq(metricsTable.id, id));
     res.status(204).send();

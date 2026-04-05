@@ -9,7 +9,7 @@ import {
 import type { Metric, CreateMetricBody, UpdateMetricBody } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -40,16 +40,23 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { SlidersHorizontal, Plus, Pencil, Trash2, Target, ChevronUp, ChevronDown, Info } from "lucide-react";
+import {
+  SlidersHorizontal,
+  Plus,
+  Pencil,
+  Trash2,
+  Target,
+  ChevronUp,
+  ChevronDown,
+  Info,
+} from "lucide-react";
 
-const METRIC_TYPES = ["number", "checkbox", "toggle", "text", "duration", "scale", "dropdown"] as const;
+const METRIC_TYPES = ["number", "checkbox", "text", "duration", "scale"] as const;
 const CATEGORIES = ["Recovery", "Nutrition", "Activity", "Productivity", "Custom"] as const;
 
 const TYPE_COLORS: Record<string, string> = {
   number: "bg-blue-500/10 text-blue-400 border-blue-500/20",
   checkbox: "bg-green-500/10 text-green-400 border-green-500/20",
-  toggle: "bg-purple-500/10 text-purple-400 border-purple-500/20",
-  dropdown: "bg-orange-500/10 text-orange-400 border-orange-500/20",
   text: "bg-gray-500/10 text-gray-400 border-gray-500/20",
   duration: "bg-cyan-500/10 text-cyan-400 border-cyan-500/20",
   scale: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20",
@@ -74,11 +81,9 @@ const CATEGORY_ICONS: Record<string, string> = {
 const TYPE_DESCRIPTIONS: Record<string, string> = {
   number: "Numeric value (e.g. 8 hours, 2000 calories)",
   checkbox: "Yes/No completed",
-  toggle: "On/Off switch",
   text: "Free text entry",
   duration: "Time duration (HH:MM format)",
   scale: "Scale rating 1–10",
-  dropdown: "Choose from custom options (comma-separated in Target)",
 };
 
 type MetricForm = {
@@ -113,7 +118,8 @@ export default function CustomizeDashboard() {
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [isMoving, setIsMoving] = useState(false);
 
-  const invalidate = () => queryClient.invalidateQueries({ queryKey: getListMetricsQueryKey() });
+  const invalidate = () =>
+    queryClient.invalidateQueries({ queryKey: getListMetricsQueryKey() });
 
   function openCreate() {
     setEditingMetric(null);
@@ -139,6 +145,7 @@ export default function CustomizeDashboard() {
       toast({ variant: "destructive", title: "Name is required" });
       return;
     }
+
     const payload = {
       name: form.name.trim(),
       type: form.type as CreateMetricBody["type"],
@@ -157,8 +164,9 @@ export default function CustomizeDashboard() {
             setDialogOpen(false);
             invalidate();
           },
-          onError: () => toast({ variant: "destructive", title: "Failed to update trackable" }),
-        }
+          onError: () =>
+            toast({ variant: "destructive", title: "Failed to update trackable" }),
+        },
       );
     } else {
       const maxOrder = metrics?.length ?? 0;
@@ -170,8 +178,9 @@ export default function CustomizeDashboard() {
             setDialogOpen(false);
             invalidate();
           },
-          onError: () => toast({ variant: "destructive", title: "Failed to add trackable" }),
-        }
+          onError: () =>
+            toast({ variant: "destructive", title: "Failed to add trackable" }),
+        },
       );
     }
   }
@@ -186,8 +195,9 @@ export default function CustomizeDashboard() {
           setDeleteId(null);
           invalidate();
         },
-        onError: () => toast({ variant: "destructive", title: "Failed to delete trackable" }),
-      }
+        onError: () =>
+          toast({ variant: "destructive", title: "Failed to delete trackable" }),
+      },
     );
   }
 
@@ -208,20 +218,28 @@ export default function CustomizeDashboard() {
         updateMetric.mutateAsync({ id: itemA.id, data: { displayOrder: itemB.displayOrder } }),
         updateMetric.mutateAsync({ id: itemB.id, data: { displayOrder: itemA.displayOrder } }),
       ]);
-      // If both orders are the same, swap using index-based values
+
       if (itemA.displayOrder === itemB.displayOrder) {
-        const allItems = [...(metrics ?? [])].sort((a, b) => a.displayOrder - b.displayOrder || a.id - b.id);
+        const allItems = [...(metrics ?? [])].sort(
+          (a, b) => a.displayOrder - b.displayOrder || a.id - b.id,
+        );
         const updates = allItems.map((m, i) => ({ id: m.id, displayOrder: i * 10 }));
-        // Swap targetIndex and currentIndex in updates
-        const aUpdate = updates.find(u => u.id === itemA.id);
-        const bUpdate = updates.find(u => u.id === itemB.id);
+        const aUpdate = updates.find((u) => u.id === itemA.id);
+        const bUpdate = updates.find((u) => u.id === itemB.id);
+
         if (aUpdate && bUpdate) {
-          [aUpdate.displayOrder, bUpdate.displayOrder] = [bUpdate.displayOrder, aUpdate.displayOrder];
-          await Promise.all(updates.map(u =>
-            updateMetric.mutateAsync({ id: u.id, data: { displayOrder: u.displayOrder } })
-          ));
+          [aUpdate.displayOrder, bUpdate.displayOrder] = [
+            bUpdate.displayOrder,
+            aUpdate.displayOrder,
+          ];
+          await Promise.all(
+            updates.map((u) =>
+              updateMetric.mutateAsync({ id: u.id, data: { displayOrder: u.displayOrder } }),
+            ),
+          );
         }
       }
+
       invalidate();
     } catch {
       toast({ variant: "destructive", title: "Failed to reorder" });
@@ -245,7 +263,9 @@ export default function CustomizeDashboard() {
             <SlidersHorizontal className="h-7 w-7" />
             Customize Dashboard
           </h1>
-          <p className="text-muted-foreground">Define exactly what you want to track each day.</p>
+          <p className="text-muted-foreground">
+            Define exactly what you want to track each day.
+          </p>
         </div>
         <Button onClick={openCreate} className="gap-2">
           <Plus className="h-4 w-4" />
@@ -265,7 +285,8 @@ export default function CustomizeDashboard() {
             <Target className="h-12 w-12 text-muted-foreground/50 mb-4" />
             <p className="text-lg font-medium mb-1">Nothing tracked yet</p>
             <p className="text-muted-foreground mb-6 max-w-sm">
-              Add trackables to define what matters to you. Your daily dashboard will be built from these.
+              Add trackables to define what matters to you. Your daily dashboard will be
+              built from these.
             </p>
             <Button onClick={openCreate} className="gap-2">
               <Plus className="h-4 w-4" />
@@ -278,17 +299,23 @@ export default function CustomizeDashboard() {
           {CATEGORIES.map((cat) => {
             const items = grouped[cat];
             if (!items || items.length === 0) return null;
+
             return (
               <Card key={cat}>
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base flex items-center gap-2">
                     <span>{CATEGORY_ICONS[cat]}</span>
-                    <span className={`px-2 py-0.5 rounded-md text-xs font-medium ${CATEGORY_COLORS[cat]}`}>{cat}</span>
+                    <span
+                      className={`px-2 py-0.5 rounded-md text-xs font-medium ${CATEGORY_COLORS[cat]}`}
+                    >
+                      {cat}
+                    </span>
                     <span className="text-muted-foreground font-normal text-sm">
                       {items.length} trackable{items.length !== 1 ? "s" : ""}
                     </span>
                   </CardTitle>
                 </CardHeader>
+
                 <CardContent className="space-y-2">
                   {items.map((m, index) => (
                     <div
@@ -316,6 +343,7 @@ export default function CustomizeDashboard() {
                             <ChevronDown className="h-3 w-3" />
                           </Button>
                         </div>
+
                         <div className="min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="font-medium text-sm">{m.name}</span>
@@ -337,6 +365,7 @@ export default function CustomizeDashboard() {
                               </span>
                             )}
                           </div>
+
                           {m.aiContext && (
                             <p className="text-[11px] text-muted-foreground/70 mt-0.5 truncate max-w-xs flex items-center gap-1">
                               <Info className="h-3 w-3 shrink-0" />
@@ -345,6 +374,7 @@ export default function CustomizeDashboard() {
                           )}
                         </div>
                       </div>
+
                       <div className="flex gap-1 shrink-0">
                         <Button
                           size="icon"
@@ -372,12 +402,12 @@ export default function CustomizeDashboard() {
         </div>
       )}
 
-      {/* Add/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>{editingMetric ? "Edit Trackable" : "Add Trackable"}</DialogTitle>
           </DialogHeader>
+
           <div className="space-y-4 py-2">
             <div className="space-y-1.5">
               <Label htmlFor="metric-name">Name</Label>
@@ -392,7 +422,10 @@ export default function CustomizeDashboard() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <Label>Type</Label>
-                <Select value={form.type} onValueChange={(v) => setForm((f) => ({ ...f, type: v }))}>
+                <Select
+                  value={form.type}
+                  onValueChange={(v) => setForm((f) => ({ ...f, type: v }))}
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -405,12 +438,18 @@ export default function CustomizeDashboard() {
                   </SelectContent>
                 </Select>
                 {form.type && (
-                  <p className="text-[11px] text-muted-foreground">{TYPE_DESCRIPTIONS[form.type]}</p>
+                  <p className="text-[11px] text-muted-foreground">
+                    {TYPE_DESCRIPTIONS[form.type]}
+                  </p>
                 )}
               </div>
+
               <div className="space-y-1.5">
                 <Label>Category / Section</Label>
-                <Select value={form.category} onValueChange={(v) => setForm((f) => ({ ...f, category: v }))}>
+                <Select
+                  value={form.category}
+                  onValueChange={(v) => setForm((f) => ({ ...f, category: v }))}
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -435,13 +474,12 @@ export default function CustomizeDashboard() {
                   onChange={(e) => setForm((f) => ({ ...f, unit: e.target.value }))}
                 />
               </div>
+
               <div className="space-y-1.5">
-                <Label htmlFor="target-value">
-                  {form.type === "dropdown" ? "Options (comma-separated)" : "Target Value (optional)"}
-                </Label>
+                <Label htmlFor="target-value">Target Value (optional)</Label>
                 <Input
                   id="target-value"
-                  placeholder={form.type === "dropdown" ? "Good, Okay, Poor" : "e.g. 8, 10000"}
+                  placeholder="e.g. 8, 10000"
                   value={form.targetValue}
                   onChange={(e) => setForm((f) => ({ ...f, targetValue: e.target.value }))}
                 />
@@ -449,7 +487,9 @@ export default function CustomizeDashboard() {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="ai-context">Description <span className="text-muted-foreground font-normal">(optional)</span></Label>
+              <Label htmlFor="ai-context">
+                Description <span className="text-muted-foreground font-normal">(optional)</span>
+              </Label>
               <Textarea
                 id="ai-context"
                 placeholder='e.g. "Daily movement and activity level" or "Avoid nicotine use for the day"'
@@ -458,10 +498,12 @@ export default function CustomizeDashboard() {
                 className="min-h-[64px] text-sm"
               />
               <p className="text-[11px] text-muted-foreground">
-                Helps AI understand what this habit means to you and give more relevant insights.
+                Helps AI understand what this habit means to you and give more relevant
+                insights.
               </p>
             </div>
           </div>
+
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
               Cancel
@@ -476,13 +518,13 @@ export default function CustomizeDashboard() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation */}
       <AlertDialog open={deleteId != null} onOpenChange={(o) => !o && setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete trackable?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete the trackable and all its logged history. This action cannot be undone.
+              This will permanently delete the trackable and all its logged history. This
+              action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
