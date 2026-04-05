@@ -175,6 +175,29 @@ router.get("/:id", async (req, res) => {
   }
 });
 
+// PATCH /api/pre-day-plans/:id
+router.patch("/:id", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const [existing] = await db.select().from(preDayPlansTable).where(eq(preDayPlansTable.id, id));
+    if (!existing) {
+      res.status(404).json({ error: "Pre-day plan not found" });
+      return;
+    }
+    const body = req.body as Record<string, unknown>;
+    const updates: Partial<typeof preDayPlansTable.$inferInsert> = {};
+    if (body.date !== undefined) updates.date = String(body.date);
+    if (body.tasksPlanned !== undefined) updates.tasksPlanned = body.tasksPlanned != null ? String(body.tasksPlanned) : null;
+    if (body.calendarCommitments !== undefined) updates.calendarCommitments = body.calendarCommitments != null ? String(body.calendarCommitments) : null;
+    if (body.energyNote !== undefined) updates.energyNote = body.energyNote != null ? String(body.energyNote) : null;
+    const [updated] = await db.update(preDayPlansTable).set(updates).where(eq(preDayPlansTable.id, id)).returning();
+    res.json(formatPlan(updated));
+  } catch (err) {
+    req.log.error({ err }, "Failed to update pre-day plan");
+    res.status(500).json({ error: "Failed to update pre-day plan" });
+  }
+});
+
 // DELETE /api/pre-day-plans/:id
 router.delete("/:id", async (req, res) => {
   try {

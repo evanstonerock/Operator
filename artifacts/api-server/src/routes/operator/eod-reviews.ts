@@ -159,6 +159,43 @@ router.get("/:id", async (req, res) => {
   }
 });
 
+// PATCH /api/eod-reviews/:id
+router.patch("/:id", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const [existing] = await db.select().from(endOfDayReviewsTable).where(eq(endOfDayReviewsTable.id, id));
+    if (!existing) {
+      res.status(404).json({ error: "EOD review not found" });
+      return;
+    }
+    const body = req.body as Record<string, unknown>;
+    const updates: Partial<typeof endOfDayReviewsTable.$inferInsert> = {};
+    if (body.date !== undefined) updates.date = String(body.date);
+    if (body.sleepHours !== undefined) updates.sleepHours = body.sleepHours != null ? Number(body.sleepHours) : null;
+    if (body.sleepScore !== undefined) updates.sleepScore = body.sleepScore != null ? Number(body.sleepScore) : null;
+    if (body.calories !== undefined) updates.calories = body.calories != null ? Number(body.calories) : null;
+    if (body.proteinG !== undefined) updates.proteinG = body.proteinG != null ? Number(body.proteinG) : null;
+    if (body.carbsG !== undefined) updates.carbsG = body.carbsG != null ? Number(body.carbsG) : null;
+    if (body.fatG !== undefined) updates.fatG = body.fatG != null ? Number(body.fatG) : null;
+    if (body.waterOz !== undefined) updates.waterOz = body.waterOz != null ? Number(body.waterOz) : null;
+    if (body.steps !== undefined) updates.steps = body.steps != null ? Number(body.steps) : null;
+    if (body.workoutCompleted !== undefined) updates.workoutCompleted = body.workoutCompleted != null ? Boolean(body.workoutCompleted) : null;
+    if (body.workoutType !== undefined) updates.workoutType = body.workoutType != null ? String(body.workoutType) : null;
+    if (body.habitsCompleted !== undefined) updates.habitsCompleted = body.habitsCompleted != null ? String(body.habitsCompleted) : null;
+    if (body.tasksPlanned !== undefined) updates.tasksPlanned = body.tasksPlanned != null ? Number(body.tasksPlanned) : null;
+    if (body.tasksCompleted !== undefined) updates.tasksCompleted = body.tasksCompleted != null ? Number(body.tasksCompleted) : null;
+    if (body.tasksMissed !== undefined) updates.tasksMissed = body.tasksMissed != null ? Number(body.tasksMissed) : null;
+    if (body.calendarCommitments !== undefined) updates.calendarCommitments = body.calendarCommitments != null ? String(body.calendarCommitments) : null;
+    if (body.healthNotes !== undefined) updates.healthNotes = body.healthNotes != null ? String(body.healthNotes) : null;
+    if (body.reflection !== undefined) updates.reflection = body.reflection != null ? String(body.reflection) : null;
+    const [updated] = await db.update(endOfDayReviewsTable).set(updates).where(eq(endOfDayReviewsTable.id, id)).returning();
+    res.json(formatReview(updated));
+  } catch (err) {
+    req.log.error({ err }, "Failed to update EOD review");
+    res.status(500).json({ error: "Failed to update EOD review" });
+  }
+});
+
 // DELETE /api/eod-reviews/:id
 router.delete("/:id", async (req, res) => {
   try {

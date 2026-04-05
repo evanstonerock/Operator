@@ -29,6 +29,9 @@ import type {
   OperatorStats,
   PreDayPlan,
   PreWeekPlan,
+  UpdateEodReviewBody,
+  UpdatePreDayPlanBody,
+  UpdatePreWeekPlanBody,
 } from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
@@ -384,6 +387,93 @@ export function useGetEodReview<
 }
 
 /**
+ * @summary Update an end-of-day review
+ */
+export const getUpdateEodReviewUrl = (id: number) => {
+  return `/api/eod-reviews/${id}`;
+};
+
+export const updateEodReview = async (
+  id: number,
+  updateEodReviewBody: UpdateEodReviewBody,
+  options?: RequestInit,
+): Promise<EodReview> => {
+  return customFetch<EodReview>(getUpdateEodReviewUrl(id), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateEodReviewBody),
+  });
+};
+
+export const getUpdateEodReviewMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateEodReview>>,
+    TError,
+    { id: number; data: BodyType<UpdateEodReviewBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateEodReview>>,
+  TError,
+  { id: number; data: BodyType<UpdateEodReviewBody> },
+  TContext
+> => {
+  const mutationKey = ["updateEodReview"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateEodReview>>,
+    { id: number; data: BodyType<UpdateEodReviewBody> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return updateEodReview(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateEodReviewMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateEodReview>>
+>;
+export type UpdateEodReviewMutationBody = BodyType<UpdateEodReviewBody>;
+export type UpdateEodReviewMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Update an end-of-day review
+ */
+export const useUpdateEodReview = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateEodReview>>,
+    TError,
+    { id: number; data: BodyType<UpdateEodReviewBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateEodReview>>,
+  TError,
+  { id: number; data: BodyType<UpdateEodReviewBody> },
+  TContext
+> => {
+  return useMutation(getUpdateEodReviewMutationOptions(options));
+};
+
+/**
  * @summary Delete an end-of-day review
  */
 export const getDeleteEodReviewUrl = (id: number) => {
@@ -733,6 +823,93 @@ export function useGetPreDayPlan<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * @summary Update a pre-day plan
+ */
+export const getUpdatePreDayPlanUrl = (id: number) => {
+  return `/api/pre-day-plans/${id}`;
+};
+
+export const updatePreDayPlan = async (
+  id: number,
+  updatePreDayPlanBody: UpdatePreDayPlanBody,
+  options?: RequestInit,
+): Promise<PreDayPlan> => {
+  return customFetch<PreDayPlan>(getUpdatePreDayPlanUrl(id), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updatePreDayPlanBody),
+  });
+};
+
+export const getUpdatePreDayPlanMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updatePreDayPlan>>,
+    TError,
+    { id: number; data: BodyType<UpdatePreDayPlanBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updatePreDayPlan>>,
+  TError,
+  { id: number; data: BodyType<UpdatePreDayPlanBody> },
+  TContext
+> => {
+  const mutationKey = ["updatePreDayPlan"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updatePreDayPlan>>,
+    { id: number; data: BodyType<UpdatePreDayPlanBody> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return updatePreDayPlan(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdatePreDayPlanMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updatePreDayPlan>>
+>;
+export type UpdatePreDayPlanMutationBody = BodyType<UpdatePreDayPlanBody>;
+export type UpdatePreDayPlanMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Update a pre-day plan
+ */
+export const useUpdatePreDayPlan = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updatePreDayPlan>>,
+    TError,
+    { id: number; data: BodyType<UpdatePreDayPlanBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updatePreDayPlan>>,
+  TError,
+  { id: number; data: BodyType<UpdatePreDayPlanBody> },
+  TContext
+> => {
+  return useMutation(getUpdatePreDayPlanMutationOptions(options));
+};
 
 /**
  * @summary Delete a pre-day plan
@@ -1087,6 +1264,93 @@ export function useGetPreWeekPlan<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * @summary Update a pre-week plan
+ */
+export const getUpdatePreWeekPlanUrl = (id: number) => {
+  return `/api/pre-week-plans/${id}`;
+};
+
+export const updatePreWeekPlan = async (
+  id: number,
+  updatePreWeekPlanBody: UpdatePreWeekPlanBody,
+  options?: RequestInit,
+): Promise<PreWeekPlan> => {
+  return customFetch<PreWeekPlan>(getUpdatePreWeekPlanUrl(id), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updatePreWeekPlanBody),
+  });
+};
+
+export const getUpdatePreWeekPlanMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updatePreWeekPlan>>,
+    TError,
+    { id: number; data: BodyType<UpdatePreWeekPlanBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updatePreWeekPlan>>,
+  TError,
+  { id: number; data: BodyType<UpdatePreWeekPlanBody> },
+  TContext
+> => {
+  const mutationKey = ["updatePreWeekPlan"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updatePreWeekPlan>>,
+    { id: number; data: BodyType<UpdatePreWeekPlanBody> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return updatePreWeekPlan(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdatePreWeekPlanMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updatePreWeekPlan>>
+>;
+export type UpdatePreWeekPlanMutationBody = BodyType<UpdatePreWeekPlanBody>;
+export type UpdatePreWeekPlanMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Update a pre-week plan
+ */
+export const useUpdatePreWeekPlan = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updatePreWeekPlan>>,
+    TError,
+    { id: number; data: BodyType<UpdatePreWeekPlanBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updatePreWeekPlan>>,
+  TError,
+  { id: number; data: BodyType<UpdatePreWeekPlanBody> },
+  TContext
+> => {
+  return useMutation(getUpdatePreWeekPlanMutationOptions(options));
+};
 
 /**
  * @summary Delete a pre-week plan

@@ -177,6 +177,30 @@ router.get("/:id", async (req, res) => {
   }
 });
 
+// PATCH /api/pre-week-plans/:id
+router.patch("/:id", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const [existing] = await db.select().from(preWeekPlansTable).where(eq(preWeekPlansTable.id, id));
+    if (!existing) {
+      res.status(404).json({ error: "Pre-week plan not found" });
+      return;
+    }
+    const body = req.body as Record<string, unknown>;
+    const updates: Partial<typeof preWeekPlansTable.$inferInsert> = {};
+    if (body.weekStartDate !== undefined) updates.weekStartDate = String(body.weekStartDate);
+    if (body.goals !== undefined) updates.goals = body.goals != null ? String(body.goals) : null;
+    if (body.calendarCommitments !== undefined) updates.calendarCommitments = body.calendarCommitments != null ? String(body.calendarCommitments) : null;
+    if (body.capacityNote !== undefined) updates.capacityNote = body.capacityNote != null ? String(body.capacityNote) : null;
+    if (body.reflection !== undefined) updates.reflection = body.reflection != null ? String(body.reflection) : null;
+    const [updated] = await db.update(preWeekPlansTable).set(updates).where(eq(preWeekPlansTable.id, id)).returning();
+    res.json(formatPlan(updated));
+  } catch (err) {
+    req.log.error({ err }, "Failed to update pre-week plan");
+    res.status(500).json({ error: "Failed to update pre-week plan" });
+  }
+});
+
 // DELETE /api/pre-week-plans/:id
 router.delete("/:id", async (req, res) => {
   try {

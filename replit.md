@@ -35,9 +35,9 @@ Legacy tables (still in DB, unused): `daily_checkins`, `weekly_reviews`, `metric
 
 ## API Routes
 
-- `GET/POST /api/eod-reviews` + `GET/DELETE /api/eod-reviews/:id`
-- `GET/POST /api/pre-day-plans` + `GET/DELETE /api/pre-day-plans/:id`
-- `GET/POST /api/pre-week-plans` + `GET/DELETE /api/pre-week-plans/:id`
+- `GET/POST /api/eod-reviews` + `GET/PATCH/DELETE /api/eod-reviews/:id`
+- `GET/POST /api/pre-day-plans` + `GET/PATCH/DELETE /api/pre-day-plans/:id`
+- `GET/POST /api/pre-week-plans` + `GET/PATCH/DELETE /api/pre-week-plans/:id`
 - `GET /api/operator/stats`
 
 ## AI

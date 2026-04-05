@@ -23,8 +23,10 @@ function Row({ label, value, span }: { label: string; value: string; span?: bool
 function EodCard({ review }: { readonly review: EodReview }) {
   const hasData = [
     review.sleepHours, review.sleepScore, review.calories, review.proteinG,
-    review.steps, review.workoutCompleted, review.tasksPlanned,
-    review.calendarCommitments, review.healthNotes,
+    review.carbsG, review.fatG, review.waterOz,
+    review.steps, review.workoutCompleted,
+    review.habitsCompleted, review.tasksPlanned, review.tasksCompleted, review.tasksMissed,
+    review.calendarCommitments, review.healthNotes, review.reflection,
   ].some(v => v != null);
 
   return (

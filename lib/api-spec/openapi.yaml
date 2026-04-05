@@ -106,6 +106,35 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: updateEodReview
+      tags: [eod-reviews]
+      summary: Update an end-of-day review
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateEodReviewBody"
+      responses:
+        "200":
+          description: Updated end-of-day review
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EodReview"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
     delete:
       operationId: deleteEodReview
       tags: [eod-reviews]
@@ -193,6 +222,35 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: updatePreDayPlan
+      tags: [pre-day-plans]
+      summary: Update a pre-day plan
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdatePreDayPlanBody"
+      responses:
+        "200":
+          description: Updated pre-day plan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PreDayPlan"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
     delete:
       operationId: deletePreDayPlan
       tags: [pre-day-plans]
@@ -270,6 +328,35 @@ paths:
       responses:
         "200":
           description: Pre-week plan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PreWeekPlan"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: updatePreWeekPlan
+      tags: [pre-week-plans]
+      summary: Update a pre-week plan
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdatePreWeekPlanBody"
+      responses:
+        "200":
+          description: Updated pre-week plan
           content:
             application/json:
               schema:
@@ -528,6 +615,72 @@ components:
           type: string
       required:
         - weekStartDate
+
+    UpdateEodReviewBody:
+      type: object
+      properties:
+        date:
+          type: string
+        sleepHours:
+          type: number
+        sleepScore:
+          type: integer
+        calories:
+          type: integer
+        proteinG:
+          type: number
+        carbsG:
+          type: number
+        fatG:
+          type: number
+        waterOz:
+          type: number
+        steps:
+          type: integer
+        workoutCompleted:
+          type: boolean
+        workoutType:
+          type: string
+        habitsCompleted:
+          type: string
+        tasksPlanned:
+          type: integer
+        tasksCompleted:
+          type: integer
+        tasksMissed:
+          type: integer
+        calendarCommitments:
+          type: string
+        healthNotes:
+          type: string
+        reflection:
+          type: string
+
+    UpdatePreDayPlanBody:
+      type: object
+      properties:
+        date:
+          type: string
+        tasksPlanned:
+          type: string
+        calendarCommitments:
+          type: string
+        energyNote:
+          type: string
+
+    UpdatePreWeekPlanBody:
+      type: object
+      properties:
+        weekStartDate:
+          type: string
+        goals:
+          type: string
+        calendarCommitments:
+          type: string
+        capacityNote:
+          type: string
+        reflection:
+          type: string
 
     OperatorStats:
       type: object

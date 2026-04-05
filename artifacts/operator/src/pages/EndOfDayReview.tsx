@@ -22,7 +22,7 @@ interface FormData {
   fatG: string;
   waterOz: string;
   steps: string;
-  workoutCompleted: boolean;
+  workoutCompleted: boolean | null;
   workoutType: string;
   habitsCompleted: string;
   tasksPlanned: string;
@@ -43,7 +43,7 @@ const defaultForm = (): FormData => ({
   fatG: "",
   waterOz: "",
   steps: "",
-  workoutCompleted: false,
+  workoutCompleted: null,
   workoutType: "",
   habitsCompleted: "",
   tasksPlanned: "",
@@ -128,7 +128,7 @@ export default function EndOfDayReviewPage() {
           fatG: optNum(form.fatG),
           waterOz: optNum(form.waterOz),
           steps: optNum(form.steps),
-          workoutCompleted: form.workoutCompleted || undefined,
+          workoutCompleted: form.workoutCompleted !== null ? form.workoutCompleted : undefined,
           workoutType: form.workoutType.trim() || undefined,
           habitsCompleted: form.habitsCompleted.trim() || undefined,
           tasksPlanned: optNum(form.tasksPlanned),
@@ -307,7 +307,7 @@ export default function EndOfDayReviewPage() {
         </OptionalField>
         <OptionalField label="Workout done">
           <Switch
-            checked={form.workoutCompleted}
+            checked={form.workoutCompleted === true}
             onCheckedChange={v => setField("workoutCompleted", v)}
           />
         </OptionalField>

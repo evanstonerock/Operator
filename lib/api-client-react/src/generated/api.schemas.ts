@@ -127,6 +127,42 @@ export interface CreatePreWeekPlanBody {
   reflection?: string;
 }
 
+export interface UpdateEodReviewBody {
+  date?: string;
+  sleepHours?: number;
+  sleepScore?: number;
+  calories?: number;
+  proteinG?: number;
+  carbsG?: number;
+  fatG?: number;
+  waterOz?: number;
+  steps?: number;
+  workoutCompleted?: boolean;
+  workoutType?: string;
+  habitsCompleted?: string;
+  tasksPlanned?: number;
+  tasksCompleted?: number;
+  tasksMissed?: number;
+  calendarCommitments?: string;
+  healthNotes?: string;
+  reflection?: string;
+}
+
+export interface UpdatePreDayPlanBody {
+  date?: string;
+  tasksPlanned?: string;
+  calendarCommitments?: string;
+  energyNote?: string;
+}
+
+export interface UpdatePreWeekPlanBody {
+  weekStartDate?: string;
+  goals?: string;
+  calendarCommitments?: string;
+  capacityNote?: string;
+  reflection?: string;
+}
+
 export interface OperatorStats {
   totalEodReviews: number;
   totalDayPlans: number;

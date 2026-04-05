@@ -109,6 +109,59 @@ export const GetEodReviewResponse = zod.object({
 });
 
 /**
+ * @summary Update an end-of-day review
+ */
+export const UpdateEodReviewParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const UpdateEodReviewBody = zod.object({
+  date: zod.string().optional(),
+  sleepHours: zod.number().optional(),
+  sleepScore: zod.number().optional(),
+  calories: zod.number().optional(),
+  proteinG: zod.number().optional(),
+  carbsG: zod.number().optional(),
+  fatG: zod.number().optional(),
+  waterOz: zod.number().optional(),
+  steps: zod.number().optional(),
+  workoutCompleted: zod.boolean().optional(),
+  workoutType: zod.string().optional(),
+  habitsCompleted: zod.string().optional(),
+  tasksPlanned: zod.number().optional(),
+  tasksCompleted: zod.number().optional(),
+  tasksMissed: zod.number().optional(),
+  calendarCommitments: zod.string().optional(),
+  healthNotes: zod.string().optional(),
+  reflection: zod.string().optional(),
+});
+
+export const UpdateEodReviewResponse = zod.object({
+  id: zod.number(),
+  date: zod.string(),
+  sleepHours: zod.number().nullable(),
+  sleepScore: zod.number().nullable(),
+  calories: zod.number().nullable(),
+  proteinG: zod.number().nullable(),
+  carbsG: zod.number().nullable(),
+  fatG: zod.number().nullable(),
+  waterOz: zod.number().nullable(),
+  steps: zod.number().nullable(),
+  workoutCompleted: zod.boolean().nullable(),
+  workoutType: zod.string().nullable(),
+  habitsCompleted: zod.string().nullable(),
+  tasksPlanned: zod.number().nullable(),
+  tasksCompleted: zod.number().nullable(),
+  tasksMissed: zod.number().nullable(),
+  calendarCommitments: zod.string().nullable(),
+  healthNotes: zod.string().nullable(),
+  reflection: zod.string().nullable(),
+  aiAnalysis: zod.string().nullable(),
+  aiPlan: zod.string().nullable(),
+  createdAt: zod.string(),
+});
+
+/**
  * @summary Delete an end-of-day review
  */
 export const DeleteEodReviewParams = zod.object({
@@ -156,6 +209,31 @@ export const GetPreDayPlanParams = zod.object({
 });
 
 export const GetPreDayPlanResponse = zod.object({
+  id: zod.number(),
+  date: zod.string(),
+  tasksPlanned: zod.string().nullable(),
+  calendarCommitments: zod.string().nullable(),
+  energyNote: zod.string().nullable(),
+  aiPlan: zod.string().nullable(),
+  aiContext: zod.string().nullable(),
+  createdAt: zod.string(),
+});
+
+/**
+ * @summary Update a pre-day plan
+ */
+export const UpdatePreDayPlanParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const UpdatePreDayPlanBody = zod.object({
+  date: zod.string().optional(),
+  tasksPlanned: zod.string().optional(),
+  calendarCommitments: zod.string().optional(),
+  energyNote: zod.string().optional(),
+});
+
+export const UpdatePreDayPlanResponse = zod.object({
   id: zod.number(),
   date: zod.string(),
   tasksPlanned: zod.string().nullable(),
@@ -216,6 +294,33 @@ export const GetPreWeekPlanParams = zod.object({
 });
 
 export const GetPreWeekPlanResponse = zod.object({
+  id: zod.number(),
+  weekStartDate: zod.string(),
+  goals: zod.string().nullable(),
+  calendarCommitments: zod.string().nullable(),
+  capacityNote: zod.string().nullable(),
+  reflection: zod.string().nullable(),
+  aiPlan: zod.string().nullable(),
+  aiContext: zod.string().nullable(),
+  createdAt: zod.string(),
+});
+
+/**
+ * @summary Update a pre-week plan
+ */
+export const UpdatePreWeekPlanParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const UpdatePreWeekPlanBody = zod.object({
+  weekStartDate: zod.string().optional(),
+  goals: zod.string().optional(),
+  calendarCommitments: zod.string().optional(),
+  capacityNote: zod.string().optional(),
+  reflection: zod.string().optional(),
+});
+
+export const UpdatePreWeekPlanResponse = zod.object({
   id: zod.number(),
   weekStartDate: zod.string(),
   goals: zod.string().nullable(),
