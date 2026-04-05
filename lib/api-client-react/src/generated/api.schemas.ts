@@ -112,6 +112,40 @@ export interface TrendPoint {
   health: number;
 }
 
+export interface ReflectRequest {
+  notes: string;
+  energyLevel?: number;
+  focusLevel?: number;
+  healthLevel?: number;
+  sleepQuality?: number;
+  mood?: number;
+  tasksCompleted?: string;
+  tasksMissed?: string;
+  habitsCompleted?: string;
+  symptomsNotes?: string;
+}
+
+export interface ReflectResponse {
+  reflection: string;
+}
+
+export interface PlanRequest {
+  notes: string;
+  energyLevel?: number;
+  focusLevel?: number;
+  healthLevel?: number;
+  sleepQuality?: number;
+  mood?: number;
+  tasksCompleted?: string;
+  tasksMissed?: string;
+  goalsNextWeek?: string;
+  existingCommitments?: string;
+}
+
+export interface PlanResponse {
+  plan: string;
+}
+
 export type ListDailyCheckinsParams = {
   limit?: number;
   offset?: number;

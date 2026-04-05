@@ -25,6 +25,10 @@ import type {
   ListDailyCheckinsParams,
   ListWeeklyReviewsParams,
   OperatorStats,
+  PlanRequest,
+  PlanResponse,
+  ReflectRequest,
+  ReflectResponse,
   TrendPoint,
   WeeklyReview,
 } from "./api.schemas";
@@ -971,3 +975,175 @@ export function useGetOperatorTrends<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * @summary Get a Claude reflection for a set of notes/metrics
+ */
+export const getOperatorReflectUrl = () => {
+  return `/api/operator/reflect`;
+};
+
+export const operatorReflect = async (
+  reflectRequest: ReflectRequest,
+  options?: RequestInit,
+): Promise<ReflectResponse> => {
+  return customFetch<ReflectResponse>(getOperatorReflectUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(reflectRequest),
+  });
+};
+
+export const getOperatorReflectMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof operatorReflect>>,
+    TError,
+    { data: BodyType<ReflectRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof operatorReflect>>,
+  TError,
+  { data: BodyType<ReflectRequest> },
+  TContext
+> => {
+  const mutationKey = ["operatorReflect"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof operatorReflect>>,
+    { data: BodyType<ReflectRequest> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return operatorReflect(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type OperatorReflectMutationResult = NonNullable<
+  Awaited<ReturnType<typeof operatorReflect>>
+>;
+export type OperatorReflectMutationBody = BodyType<ReflectRequest>;
+export type OperatorReflectMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Get a Claude reflection for a set of notes/metrics
+ */
+export const useOperatorReflect = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof operatorReflect>>,
+    TError,
+    { data: BodyType<ReflectRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof operatorReflect>>,
+  TError,
+  { data: BodyType<ReflectRequest> },
+  TContext
+> => {
+  return useMutation(getOperatorReflectMutationOptions(options));
+};
+
+/**
+ * @summary Get an OpenAI tomorrow plan for a set of notes/metrics
+ */
+export const getOperatorPlanUrl = () => {
+  return `/api/operator/plan`;
+};
+
+export const operatorPlan = async (
+  planRequest: PlanRequest,
+  options?: RequestInit,
+): Promise<PlanResponse> => {
+  return customFetch<PlanResponse>(getOperatorPlanUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(planRequest),
+  });
+};
+
+export const getOperatorPlanMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof operatorPlan>>,
+    TError,
+    { data: BodyType<PlanRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof operatorPlan>>,
+  TError,
+  { data: BodyType<PlanRequest> },
+  TContext
+> => {
+  const mutationKey = ["operatorPlan"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof operatorPlan>>,
+    { data: BodyType<PlanRequest> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return operatorPlan(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type OperatorPlanMutationResult = NonNullable<
+  Awaited<ReturnType<typeof operatorPlan>>
+>;
+export type OperatorPlanMutationBody = BodyType<PlanRequest>;
+export type OperatorPlanMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Get an OpenAI tomorrow plan for a set of notes/metrics
+ */
+export const useOperatorPlan = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof operatorPlan>>,
+    TError,
+    { data: BodyType<PlanRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof operatorPlan>>,
+  TError,
+  { data: BodyType<PlanRequest> },
+  TContext
+> => {
+  return useMutation(getOperatorPlanMutationOptions(options));
+};

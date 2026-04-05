@@ -65,6 +65,28 @@ export default function History() {
                             <strong className="text-foreground block mb-1">Notes</strong>
                             <p className="whitespace-pre-wrap">{checkin.notes}</p>
                           </div>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <strong className="text-foreground block mb-1">Energy</strong>
+                              <p>{checkin.energyLevel}/10</p>
+                            </div>
+                            <div>
+                              <strong className="text-foreground block mb-1">Focus</strong>
+                              <p>{checkin.focusLevel}/10</p>
+                            </div>
+                            <div>
+                              <strong className="text-foreground block mb-1">Health</strong>
+                              <p>{checkin.healthLevel}/10</p>
+                            </div>
+                            <div>
+                              <strong className="text-foreground block mb-1">Sleep Quality</strong>
+                              <p>{checkin.sleepQuality}/10</p>
+                            </div>
+                            <div>
+                              <strong className="text-foreground block mb-1">Mood</strong>
+                              <p>{checkin.mood}/10</p>
+                            </div>
+                          </div>
                           <div className="grid grid-cols-2 gap-4">
                             <div>
                               <strong className="text-foreground block mb-1">Tasks Completed</strong>
@@ -75,6 +97,18 @@ export default function History() {
                               <p className="whitespace-pre-wrap">{checkin.tasksMissed}</p>
                             </div>
                           </div>
+                          {checkin.habitsCompleted && (
+                            <div>
+                              <strong className="text-foreground block mb-1">Habits Completed</strong>
+                              <p className="whitespace-pre-wrap">{checkin.habitsCompleted}</p>
+                            </div>
+                          )}
+                          {checkin.symptomsNotes && (
+                            <div>
+                              <strong className="text-foreground block mb-1">Symptoms / Health Notes</strong>
+                              <p className="whitespace-pre-wrap">{checkin.symptomsNotes}</p>
+                            </div>
+                          )}
                         </AccordionContent>
                       </AccordionItem>
                       
@@ -170,6 +204,18 @@ export default function History() {
                               <strong className="text-foreground block mb-1">Main Frustrations</strong>
                               <p className="whitespace-pre-wrap">{review.mainFrustrations}</p>
                             </div>
+                            {review.goalsNextWeek && (
+                              <div>
+                                <strong className="text-foreground block mb-1">Goals for Next Week</strong>
+                                <p className="whitespace-pre-wrap">{review.goalsNextWeek}</p>
+                              </div>
+                            )}
+                            {review.existingCommitments && (
+                              <div>
+                                <strong className="text-foreground block mb-1">Existing Commitments</strong>
+                                <p className="whitespace-pre-wrap">{review.existingCommitments}</p>
+                              </div>
+                            )}
                           </div>
                         </AccordionContent>
                       </AccordionItem>

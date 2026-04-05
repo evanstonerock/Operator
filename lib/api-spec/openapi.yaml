@@ -233,6 +233,56 @@ paths:
                 items:
                   $ref: "#/components/schemas/TrendPoint"
 
+  /operator/reflect:
+    post:
+      operationId: operatorReflect
+      tags: [operator-ai]
+      summary: Get a Claude reflection for a set of notes/metrics
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReflectRequest"
+      responses:
+        "200":
+          description: Claude reflection text
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReflectResponse"
+        "500":
+          description: AI error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /operator/plan:
+    post:
+      operationId: operatorPlan
+      tags: [operator-ai]
+      summary: Get an OpenAI tomorrow plan for a set of notes/metrics
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlanRequest"
+      responses:
+        "200":
+          description: OpenAI plan text
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlanResponse"
+        "500":
+          description: AI error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
 components:
   schemas:
     HealthStatus:
@@ -470,3 +520,71 @@ components:
         - mood
         - sleep
         - health
+
+    ReflectRequest:
+      type: object
+      properties:
+        notes:
+          type: string
+        energyLevel:
+          type: integer
+        focusLevel:
+          type: integer
+        healthLevel:
+          type: integer
+        sleepQuality:
+          type: integer
+        mood:
+          type: integer
+        tasksCompleted:
+          type: string
+        tasksMissed:
+          type: string
+        habitsCompleted:
+          type: string
+        symptomsNotes:
+          type: string
+      required:
+        - notes
+
+    ReflectResponse:
+      type: object
+      properties:
+        reflection:
+          type: string
+      required:
+        - reflection
+
+    PlanRequest:
+      type: object
+      properties:
+        notes:
+          type: string
+        energyLevel:
+          type: integer
+        focusLevel:
+          type: integer
+        healthLevel:
+          type: integer
+        sleepQuality:
+          type: integer
+        mood:
+          type: integer
+        tasksCompleted:
+          type: string
+        tasksMissed:
+          type: string
+        goalsNextWeek:
+          type: string
+        existingCommitments:
+          type: string
+      required:
+        - notes
+
+    PlanResponse:
+      type: object
+      properties:
+        plan:
+          type: string
+      required:
+        - plan

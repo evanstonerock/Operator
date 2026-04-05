@@ -202,3 +202,43 @@ export const GetOperatorTrendsResponseItem = zod.object({
 export const GetOperatorTrendsResponse = zod.array(
   GetOperatorTrendsResponseItem,
 );
+
+/**
+ * @summary Get a Claude reflection for a set of notes/metrics
+ */
+export const OperatorReflectBody = zod.object({
+  notes: zod.string(),
+  energyLevel: zod.number().optional(),
+  focusLevel: zod.number().optional(),
+  healthLevel: zod.number().optional(),
+  sleepQuality: zod.number().optional(),
+  mood: zod.number().optional(),
+  tasksCompleted: zod.string().optional(),
+  tasksMissed: zod.string().optional(),
+  habitsCompleted: zod.string().optional(),
+  symptomsNotes: zod.string().optional(),
+});
+
+export const OperatorReflectResponse = zod.object({
+  reflection: zod.string(),
+});
+
+/**
+ * @summary Get an OpenAI tomorrow plan for a set of notes/metrics
+ */
+export const OperatorPlanBody = zod.object({
+  notes: zod.string(),
+  energyLevel: zod.number().optional(),
+  focusLevel: zod.number().optional(),
+  healthLevel: zod.number().optional(),
+  sleepQuality: zod.number().optional(),
+  mood: zod.number().optional(),
+  tasksCompleted: zod.string().optional(),
+  tasksMissed: zod.string().optional(),
+  goalsNextWeek: zod.string().optional(),
+  existingCommitments: zod.string().optional(),
+});
+
+export const OperatorPlanResponse = zod.object({
+  plan: zod.string(),
+});

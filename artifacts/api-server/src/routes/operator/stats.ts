@@ -1,6 +1,8 @@
 import { Router } from "express";
 import { db, dailyCheckinsTable, weeklyReviewsTable } from "@workspace/db";
 import { desc, sql } from "drizzle-orm";
+import { anthropic } from "@workspace/integrations-anthropic-ai";
+import { openai } from "@workspace/integrations-openai-ai-server";
 
 const router = Router();
 
@@ -103,6 +105,114 @@ router.get("/trends", async (req, res) => {
   } catch (err) {
     req.log.error({ err }, "Failed to get operator trends");
     res.status(500).json({ error: "Failed to get trends" });
+  }
+});
+
+// POST /api/operator/reflect — standalone Claude reflection
+router.post("/reflect", async (req, res) => {
+  try {
+    const { notes, energyLevel, focusLevel, healthLevel, sleepQuality, mood, tasksCompleted, tasksMissed, habitsCompleted, symptomsNotes } = req.body as {
+      notes: string;
+      energyLevel?: number;
+      focusLevel?: number;
+      healthLevel?: number;
+      sleepQuality?: number;
+      mood?: number;
+      tasksCompleted?: string;
+      tasksMissed?: string;
+      habitsCompleted?: string;
+      symptomsNotes?: string;
+    };
+
+    if (!notes) {
+      res.status(400).json({ error: "notes is required" });
+      return;
+    }
+
+    const metricsText = [
+      energyLevel != null ? `Energy: ${energyLevel}/10` : null,
+      focusLevel != null ? `Focus: ${focusLevel}/10` : null,
+      healthLevel != null ? `Health: ${healthLevel}/10` : null,
+      sleepQuality != null ? `Sleep: ${sleepQuality}/10` : null,
+      mood != null ? `Mood: ${mood}/10` : null,
+      tasksCompleted ? `Tasks completed: ${tasksCompleted}` : null,
+      tasksMissed ? `Tasks missed: ${tasksMissed}` : null,
+      habitsCompleted ? `Habits completed: ${habitsCompleted}` : null,
+      symptomsNotes ? `Symptoms/Health notes: ${symptomsNotes}` : null,
+    ].filter(Boolean).join("\n");
+
+    const message = await anthropic.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 8192,
+      messages: [
+        {
+          role: "user",
+          content: `You are a thoughtful life coach. Reflect on this day entry and provide honest, constructive feedback.\n\nNotes: ${notes}\n\n${metricsText}\n\nProvide a structured reflection covering: what went well, what patterns you notice, and one key insight for personal growth.`,
+        },
+      ],
+    });
+
+    const reflection = message.content[0]?.type === "text" ? message.content[0].text : "";
+    res.json({ reflection });
+  } catch (err) {
+    req.log.error({ err }, "Failed to generate Claude reflection");
+    res.status(500).json({ error: "Failed to generate reflection" });
+  }
+});
+
+// POST /api/operator/plan — standalone OpenAI tomorrow plan
+router.post("/plan", async (req, res) => {
+  try {
+    const { notes, energyLevel, focusLevel, healthLevel, sleepQuality, mood, tasksCompleted, tasksMissed, goalsNextWeek, existingCommitments } = req.body as {
+      notes: string;
+      energyLevel?: number;
+      focusLevel?: number;
+      healthLevel?: number;
+      sleepQuality?: number;
+      mood?: number;
+      tasksCompleted?: string;
+      tasksMissed?: string;
+      goalsNextWeek?: string;
+      existingCommitments?: string;
+    };
+
+    if (!notes) {
+      res.status(400).json({ error: "notes is required" });
+      return;
+    }
+
+    const contextText = [
+      energyLevel != null ? `Energy: ${energyLevel}/10` : null,
+      focusLevel != null ? `Focus: ${focusLevel}/10` : null,
+      healthLevel != null ? `Health: ${healthLevel}/10` : null,
+      sleepQuality != null ? `Sleep: ${sleepQuality}/10` : null,
+      mood != null ? `Mood: ${mood}/10` : null,
+      tasksCompleted ? `Tasks completed: ${tasksCompleted}` : null,
+      tasksMissed ? `Tasks missed: ${tasksMissed}` : null,
+      goalsNextWeek ? `Goals for next period: ${goalsNextWeek}` : null,
+      existingCommitments ? `Existing commitments: ${existingCommitments}` : null,
+    ].filter(Boolean).join("\n");
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      max_completion_tokens: 2048,
+      messages: [
+        {
+          role: "system",
+          content: "You are a strategic planner. Based on today's performance and context, create a concrete, actionable plan for tomorrow. Be specific and realistic.",
+        },
+        {
+          role: "user",
+          content: `Today's notes: ${notes}\n\n${contextText}\n\nCreate a structured plan for tomorrow with: top 3 priorities, energy management recommendations, and one thing to avoid based on today's patterns.`,
+        },
+      ],
+    });
+
+    const plan = response.choices[0]?.message?.content ?? "";
+    res.json({ plan });
+  } catch (err) {
+    req.log.error({ err }, "Failed to generate OpenAI plan");
+    res.status(500).json({ error: "Failed to generate plan" });
   }
 });
 

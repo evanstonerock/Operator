@@ -154,17 +154,19 @@ export default function DailyCheckinPage() {
                   />
 
                   <div className="space-y-6">
-                    {[
-                      { name: "energyLevel", label: "Energy Level" },
-                      { name: "focusLevel", label: "Focus Level" },
-                      { name: "healthLevel", label: "Health / Sickness" },
-                      { name: "sleepQuality", label: "Sleep Quality" },
-                      { name: "mood", label: "Mood" },
-                    ].map((slider) => (
+                    {(
+                      [
+                        { name: "energyLevel", label: "Energy Level" },
+                        { name: "focusLevel", label: "Focus Level" },
+                        { name: "healthLevel", label: "Health / Sickness" },
+                        { name: "sleepQuality", label: "Sleep Quality" },
+                        { name: "mood", label: "Mood" },
+                      ] as const
+                    ).map((slider) => (
                       <FormField
                         key={slider.name}
                         control={form.control}
-                        name={slider.name as any}
+                        name={slider.name}
                         render={({ field }) => (
                           <FormItem>
                             <div className="flex justify-between">
