@@ -7,6 +7,7 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import DailyCheckin from "@/pages/DailyCheckin";
 import WeeklyReview from "@/pages/WeeklyReview";
 import History from "@/pages/History";
+import Settings from "@/pages/Settings";
 
 const queryClient = new QueryClient();
 
@@ -17,6 +18,7 @@ function Router() {
         <Route path="/" component={DailyCheckin} />
         <Route path="/weekly" component={WeeklyReview} />
         <Route path="/history" component={History} />
+        <Route path="/settings" component={Settings} />
         <Route component={NotFound} />
       </Switch>
     </AppLayout>

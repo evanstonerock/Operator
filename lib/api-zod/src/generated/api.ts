@@ -173,6 +173,130 @@ export const DeleteWeeklyReviewParams = zod.object({
 });
 
 /**
+ * @summary List all active metrics
+ */
+export const ListMetricsResponseItem = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  type: zod.enum(["number", "checkbox", "toggle", "dropdown", "text"]),
+  category: zod.enum([
+    "Recovery",
+    "Nutrition",
+    "Activity",
+    "Productivity",
+    "Custom",
+  ]),
+  targetValue: zod.string().nullable(),
+  importanceLevel: zod.number().nullable(),
+  sortOrder: zod.number(),
+  isActive: zod.boolean(),
+  createdAt: zod.string(),
+});
+export const ListMetricsResponse = zod.array(ListMetricsResponseItem);
+
+/**
+ * @summary Create a new metric
+ */
+export const CreateMetricBody = zod.object({
+  name: zod.string(),
+  type: zod.enum(["number", "checkbox", "toggle", "dropdown", "text"]),
+  category: zod.enum([
+    "Recovery",
+    "Nutrition",
+    "Activity",
+    "Productivity",
+    "Custom",
+  ]),
+  targetValue: zod.string().nullish(),
+  importanceLevel: zod.number().nullish(),
+  sortOrder: zod.number().nullish(),
+});
+
+/**
+ * @summary Update a metric
+ */
+export const UpdateMetricParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const UpdateMetricBody = zod.object({
+  name: zod.string().optional(),
+  type: zod
+    .enum(["number", "checkbox", "toggle", "dropdown", "text"])
+    .optional(),
+  category: zod
+    .enum(["Recovery", "Nutrition", "Activity", "Productivity", "Custom"])
+    .optional(),
+  targetValue: zod.string().nullish(),
+  importanceLevel: zod.number().nullish(),
+  sortOrder: zod.number().nullish(),
+  isActive: zod.boolean().nullish(),
+});
+
+export const UpdateMetricResponse = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  type: zod.enum(["number", "checkbox", "toggle", "dropdown", "text"]),
+  category: zod.enum([
+    "Recovery",
+    "Nutrition",
+    "Activity",
+    "Productivity",
+    "Custom",
+  ]),
+  targetValue: zod.string().nullable(),
+  importanceLevel: zod.number().nullable(),
+  sortOrder: zod.number(),
+  isActive: zod.boolean(),
+  createdAt: zod.string(),
+});
+
+/**
+ * @summary Delete a metric
+ */
+export const DeleteMetricParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+/**
+ * @summary Get metric logs for a specific date
+ */
+export const ListMetricLogsQueryParams = zod.object({
+  date: zod.coerce.string(),
+});
+
+export const ListMetricLogsResponseItem = zod.object({
+  id: zod.number(),
+  date: zod.string(),
+  metricId: zod.number(),
+  value: zod.string(),
+  createdAt: zod.string(),
+  metricName: zod.string(),
+  metricType: zod.enum(["number", "checkbox", "toggle", "dropdown", "text"]),
+  metricCategory: zod.enum([
+    "Recovery",
+    "Nutrition",
+    "Activity",
+    "Productivity",
+    "Custom",
+  ]),
+});
+export const ListMetricLogsResponse = zod.array(ListMetricLogsResponseItem);
+
+/**
+ * @summary Save metric log entries for a date (upsert)
+ */
+export const SaveMetricLogsBody = zod.object({
+  date: zod.string(),
+  entries: zod.array(
+    zod.object({
+      metricId: zod.number(),
+      value: zod.string(),
+    }),
+  ),
+});
+
+/**
  * @summary Get overall stats summary
  */
 export const GetOperatorStatsResponse = zod.object({

@@ -16,6 +16,10 @@ tags:
     description: Weekly review operations
   - name: operator-ai
     description: AI analysis and planning operations
+  - name: metrics
+    description: User-defined metrics management
+  - name: metric-logs
+    description: Daily metric log entries
 paths:
   /healthz:
     get:
@@ -204,6 +208,140 @@ paths:
       responses:
         "204":
           description: Deleted
+
+  /metrics:
+    get:
+      operationId: listMetrics
+      tags: [metrics]
+      summary: List all active metrics
+      responses:
+        "200":
+          description: List of metrics
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Metric"
+    post:
+      operationId: createMetric
+      tags: [metrics]
+      summary: Create a new metric
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateMetricBody"
+      responses:
+        "201":
+          description: Created metric
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Metric"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /metrics/{id}:
+    patch:
+      operationId: updateMetric
+      tags: [metrics]
+      summary: Update a metric
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateMetricBody"
+      responses:
+        "200":
+          description: Updated metric
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Metric"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteMetric
+      tags: [metrics]
+      summary: Delete a metric
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /metric-logs:
+    get:
+      operationId: listMetricLogs
+      tags: [metric-logs]
+      summary: Get metric logs for a specific date
+      parameters:
+        - name: date
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of metric log entries with metric info
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MetricLogEntry"
+        "400":
+          description: Missing date param
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    post:
+      operationId: saveMetricLogs
+      tags: [metric-logs]
+      summary: Save metric log entries for a date (upsert)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SaveMetricLogsBody"
+      responses:
+        "201":
+          description: Saved log entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MetricLog"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /operator/stats:
     get:
@@ -588,3 +726,154 @@ components:
           type: string
       required:
         - plan
+
+    Metric:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        type:
+          type: string
+          enum: [number, checkbox, toggle, dropdown, text]
+        category:
+          type: string
+          enum: [Recovery, Nutrition, Activity, Productivity, Custom]
+        targetValue:
+          type: ["string", "null"]
+        importanceLevel:
+          type: ["integer", "null"]
+        sortOrder:
+          type: integer
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+      required:
+        - id
+        - name
+        - type
+        - category
+        - targetValue
+        - importanceLevel
+        - sortOrder
+        - isActive
+        - createdAt
+
+    CreateMetricBody:
+      type: object
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+          enum: [number, checkbox, toggle, dropdown, text]
+        category:
+          type: string
+          enum: [Recovery, Nutrition, Activity, Productivity, Custom]
+        targetValue:
+          type: ["string", "null"]
+        importanceLevel:
+          type: ["integer", "null"]
+        sortOrder:
+          type: ["integer", "null"]
+      required:
+        - name
+        - type
+        - category
+
+    UpdateMetricBody:
+      type: object
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+          enum: [number, checkbox, toggle, dropdown, text]
+        category:
+          type: string
+          enum: [Recovery, Nutrition, Activity, Productivity, Custom]
+        targetValue:
+          type: ["string", "null"]
+        importanceLevel:
+          type: ["integer", "null"]
+        sortOrder:
+          type: ["integer", "null"]
+        isActive:
+          type: ["boolean", "null"]
+
+    MetricLog:
+      type: object
+      properties:
+        id:
+          type: integer
+        date:
+          type: string
+        metricId:
+          type: integer
+        value:
+          type: string
+        createdAt:
+          type: string
+      required:
+        - id
+        - date
+        - metricId
+        - value
+        - createdAt
+
+    MetricLogEntry:
+      type: object
+      properties:
+        id:
+          type: integer
+        date:
+          type: string
+        metricId:
+          type: integer
+        value:
+          type: string
+        createdAt:
+          type: string
+        metricName:
+          type: string
+        metricType:
+          type: string
+          enum: [number, checkbox, toggle, dropdown, text]
+        metricCategory:
+          type: string
+          enum: [Recovery, Nutrition, Activity, Productivity, Custom]
+      required:
+        - id
+        - date
+        - metricId
+        - value
+        - createdAt
+        - metricName
+        - metricType
+        - metricCategory
+
+    MetricLogInput:
+      type: object
+      properties:
+        metricId:
+          type: integer
+        value:
+          type: string
+      required:
+        - metricId
+        - value
+
+    SaveMetricLogsBody:
+      type: object
+      properties:
+        date:
+          type: string
+        entries:
+          type: array
+          items:
+            $ref: "#/components/schemas/MetricLogInput"
+      required:
+        - date
+        - entries

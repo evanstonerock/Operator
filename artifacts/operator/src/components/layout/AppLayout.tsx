@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Calendar, History, FileText, CheckCircle2, LayoutDashboard } from "lucide-react";
+import { Calendar, History, CheckCircle2, LayoutDashboard, Settings2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
@@ -9,6 +9,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     { name: "Daily Check-In", href: "/", icon: CheckCircle2 },
     { name: "Weekly Review", href: "/weekly", icon: Calendar },
     { name: "History", href: "/history", icon: History },
+    { name: "Settings", href: "/settings", icon: Settings2 },
   ];
 
   return (

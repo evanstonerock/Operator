@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { db, dailyCheckinsTable } from "@workspace/db";
+import { db, dailyCheckinsTable, metricLogsTable, metricsTable } from "@workspace/db";
 import { desc, eq, sql } from "drizzle-orm";
 import { anthropic } from "@workspace/integrations-anthropic-ai";
 import { openai } from "@workspace/integrations-openai-ai-server";
@@ -47,6 +47,26 @@ router.post("/", async (req, res) => {
       symptomsNotes,
     } = parsed.data;
 
+    // Fetch metric logs for this date to include in AI prompts
+    let metricLogsContext = "";
+    try {
+      const logs = await db
+        .select({
+          value: metricLogsTable.value,
+          metricName: metricsTable.name,
+          metricCategory: metricsTable.category,
+        })
+        .from(metricLogsTable)
+        .innerJoin(metricsTable, eq(metricLogsTable.metricId, metricsTable.id))
+        .where(eq(metricLogsTable.date, date));
+
+      if (logs.length > 0) {
+        metricLogsContext = "\nMetric Logs:\n" + logs.map(l => `  ${l.metricName} (${l.metricCategory}): ${l.value}`).join("\n");
+      }
+    } catch (_e) {
+      // non-fatal, continue without metric logs
+    }
+
     // Build the user context string for AI prompts
     const userContext = `
 Date: ${date}
@@ -59,7 +79,7 @@ Mood: ${mood}/10
 Tasks Completed: ${tasksCompleted}
 Tasks Missed: ${tasksMissed}
 ${habitsCompleted ? `Habits Completed: ${habitsCompleted}` : ""}
-${symptomsNotes ? `Symptoms/Health Notes: ${symptomsNotes}` : ""}
+${symptomsNotes ? `Symptoms/Health Notes: ${symptomsNotes}` : ""}${metricLogsContext}
     `.trim();
 
     // Step 1: Claude reflection

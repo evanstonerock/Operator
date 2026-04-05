@@ -18,18 +18,25 @@ import type {
 
 import type {
   CreateDailyCheckinBody,
+  CreateMetricBody,
   CreateWeeklyReviewBody,
   DailyCheckin,
   ErrorResponse,
   HealthStatus,
   ListDailyCheckinsParams,
+  ListMetricLogsParams,
   ListWeeklyReviewsParams,
+  Metric,
+  MetricLog,
+  MetricLogEntry,
   OperatorStats,
   PlanRequest,
   PlanResponse,
   ReflectRequest,
   ReflectResponse,
+  SaveMetricLogsBody,
   TrendPoint,
+  UpdateMetricBody,
   WeeklyReview,
 } from "./api.schemas";
 
@@ -824,6 +831,516 @@ export const useDeleteWeeklyReview = <
   TContext
 > => {
   return useMutation(getDeleteWeeklyReviewMutationOptions(options));
+};
+
+/**
+ * @summary List all active metrics
+ */
+export const getListMetricsUrl = () => {
+  return `/api/metrics`;
+};
+
+export const listMetrics = async (options?: RequestInit): Promise<Metric[]> => {
+  return customFetch<Metric[]>(getListMetricsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListMetricsQueryKey = () => {
+  return [`/api/metrics`] as const;
+};
+
+export const getListMetricsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listMetrics>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listMetrics>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListMetricsQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listMetrics>>> = ({
+    signal,
+  }) => listMetrics({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listMetrics>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListMetricsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listMetrics>>
+>;
+export type ListMetricsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List all active metrics
+ */
+
+export function useListMetrics<
+  TData = Awaited<ReturnType<typeof listMetrics>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listMetrics>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListMetricsQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Create a new metric
+ */
+export const getCreateMetricUrl = () => {
+  return `/api/metrics`;
+};
+
+export const createMetric = async (
+  createMetricBody: CreateMetricBody,
+  options?: RequestInit,
+): Promise<Metric> => {
+  return customFetch<Metric>(getCreateMetricUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createMetricBody),
+  });
+};
+
+export const getCreateMetricMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createMetric>>,
+    TError,
+    { data: BodyType<CreateMetricBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createMetric>>,
+  TError,
+  { data: BodyType<CreateMetricBody> },
+  TContext
+> => {
+  const mutationKey = ["createMetric"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createMetric>>,
+    { data: BodyType<CreateMetricBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createMetric(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateMetricMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createMetric>>
+>;
+export type CreateMetricMutationBody = BodyType<CreateMetricBody>;
+export type CreateMetricMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Create a new metric
+ */
+export const useCreateMetric = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createMetric>>,
+    TError,
+    { data: BodyType<CreateMetricBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createMetric>>,
+  TError,
+  { data: BodyType<CreateMetricBody> },
+  TContext
+> => {
+  return useMutation(getCreateMetricMutationOptions(options));
+};
+
+/**
+ * @summary Update a metric
+ */
+export const getUpdateMetricUrl = (id: number) => {
+  return `/api/metrics/${id}`;
+};
+
+export const updateMetric = async (
+  id: number,
+  updateMetricBody: UpdateMetricBody,
+  options?: RequestInit,
+): Promise<Metric> => {
+  return customFetch<Metric>(getUpdateMetricUrl(id), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateMetricBody),
+  });
+};
+
+export const getUpdateMetricMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateMetric>>,
+    TError,
+    { id: number; data: BodyType<UpdateMetricBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateMetric>>,
+  TError,
+  { id: number; data: BodyType<UpdateMetricBody> },
+  TContext
+> => {
+  const mutationKey = ["updateMetric"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateMetric>>,
+    { id: number; data: BodyType<UpdateMetricBody> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return updateMetric(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateMetricMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateMetric>>
+>;
+export type UpdateMetricMutationBody = BodyType<UpdateMetricBody>;
+export type UpdateMetricMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Update a metric
+ */
+export const useUpdateMetric = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateMetric>>,
+    TError,
+    { id: number; data: BodyType<UpdateMetricBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateMetric>>,
+  TError,
+  { id: number; data: BodyType<UpdateMetricBody> },
+  TContext
+> => {
+  return useMutation(getUpdateMetricMutationOptions(options));
+};
+
+/**
+ * @summary Delete a metric
+ */
+export const getDeleteMetricUrl = (id: number) => {
+  return `/api/metrics/${id}`;
+};
+
+export const deleteMetric = async (
+  id: number,
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(getDeleteMetricUrl(id), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getDeleteMetricMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteMetric>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteMetric>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  const mutationKey = ["deleteMetric"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteMetric>>,
+    { id: number }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return deleteMetric(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteMetricMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteMetric>>
+>;
+
+export type DeleteMetricMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Delete a metric
+ */
+export const useDeleteMetric = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteMetric>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deleteMetric>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  return useMutation(getDeleteMetricMutationOptions(options));
+};
+
+/**
+ * @summary Get metric logs for a specific date
+ */
+export const getListMetricLogsUrl = (params: ListMetricLogsParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/metric-logs?${stringifiedParams}`
+    : `/api/metric-logs`;
+};
+
+export const listMetricLogs = async (
+  params: ListMetricLogsParams,
+  options?: RequestInit,
+): Promise<MetricLogEntry[]> => {
+  return customFetch<MetricLogEntry[]>(getListMetricLogsUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListMetricLogsQueryKey = (params?: ListMetricLogsParams) => {
+  return [`/api/metric-logs`, ...(params ? [params] : [])] as const;
+};
+
+export const getListMetricLogsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listMetricLogs>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  params: ListMetricLogsParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listMetricLogs>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListMetricLogsQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listMetricLogs>>> = ({
+    signal,
+  }) => listMetricLogs(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listMetricLogs>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListMetricLogsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listMetricLogs>>
+>;
+export type ListMetricLogsQueryError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Get metric logs for a specific date
+ */
+
+export function useListMetricLogs<
+  TData = Awaited<ReturnType<typeof listMetricLogs>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  params: ListMetricLogsParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listMetricLogs>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListMetricLogsQueryOptions(params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Save metric log entries for a date (upsert)
+ */
+export const getSaveMetricLogsUrl = () => {
+  return `/api/metric-logs`;
+};
+
+export const saveMetricLogs = async (
+  saveMetricLogsBody: SaveMetricLogsBody,
+  options?: RequestInit,
+): Promise<MetricLog[]> => {
+  return customFetch<MetricLog[]>(getSaveMetricLogsUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(saveMetricLogsBody),
+  });
+};
+
+export const getSaveMetricLogsMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof saveMetricLogs>>,
+    TError,
+    { data: BodyType<SaveMetricLogsBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof saveMetricLogs>>,
+  TError,
+  { data: BodyType<SaveMetricLogsBody> },
+  TContext
+> => {
+  const mutationKey = ["saveMetricLogs"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof saveMetricLogs>>,
+    { data: BodyType<SaveMetricLogsBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return saveMetricLogs(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SaveMetricLogsMutationResult = NonNullable<
+  Awaited<ReturnType<typeof saveMetricLogs>>
+>;
+export type SaveMetricLogsMutationBody = BodyType<SaveMetricLogsBody>;
+export type SaveMetricLogsMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Save metric log entries for a date (upsert)
+ */
+export const useSaveMetricLogs = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof saveMetricLogs>>,
+    TError,
+    { data: BodyType<SaveMetricLogsBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof saveMetricLogs>>,
+  TError,
+  { data: BodyType<SaveMetricLogsBody> },
+  TContext
+> => {
+  return useMutation(getSaveMetricLogsMutationOptions(options));
 };
 
 /**

@@ -146,6 +146,162 @@ export interface PlanResponse {
   plan: string;
 }
 
+export type MetricType = (typeof MetricType)[keyof typeof MetricType];
+
+export const MetricType = {
+  number: "number",
+  checkbox: "checkbox",
+  toggle: "toggle",
+  dropdown: "dropdown",
+  text: "text",
+} as const;
+
+export type MetricCategory =
+  (typeof MetricCategory)[keyof typeof MetricCategory];
+
+export const MetricCategory = {
+  Recovery: "Recovery",
+  Nutrition: "Nutrition",
+  Activity: "Activity",
+  Productivity: "Productivity",
+  Custom: "Custom",
+} as const;
+
+export interface Metric {
+  id: number;
+  name: string;
+  type: MetricType;
+  category: MetricCategory;
+  /** @nullable */
+  targetValue: string | null;
+  /** @nullable */
+  importanceLevel: number | null;
+  sortOrder: number;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export type CreateMetricBodyType =
+  (typeof CreateMetricBodyType)[keyof typeof CreateMetricBodyType];
+
+export const CreateMetricBodyType = {
+  number: "number",
+  checkbox: "checkbox",
+  toggle: "toggle",
+  dropdown: "dropdown",
+  text: "text",
+} as const;
+
+export type CreateMetricBodyCategory =
+  (typeof CreateMetricBodyCategory)[keyof typeof CreateMetricBodyCategory];
+
+export const CreateMetricBodyCategory = {
+  Recovery: "Recovery",
+  Nutrition: "Nutrition",
+  Activity: "Activity",
+  Productivity: "Productivity",
+  Custom: "Custom",
+} as const;
+
+export interface CreateMetricBody {
+  name: string;
+  type: CreateMetricBodyType;
+  category: CreateMetricBodyCategory;
+  /** @nullable */
+  targetValue?: string | null;
+  /** @nullable */
+  importanceLevel?: number | null;
+  /** @nullable */
+  sortOrder?: number | null;
+}
+
+export type UpdateMetricBodyType =
+  (typeof UpdateMetricBodyType)[keyof typeof UpdateMetricBodyType];
+
+export const UpdateMetricBodyType = {
+  number: "number",
+  checkbox: "checkbox",
+  toggle: "toggle",
+  dropdown: "dropdown",
+  text: "text",
+} as const;
+
+export type UpdateMetricBodyCategory =
+  (typeof UpdateMetricBodyCategory)[keyof typeof UpdateMetricBodyCategory];
+
+export const UpdateMetricBodyCategory = {
+  Recovery: "Recovery",
+  Nutrition: "Nutrition",
+  Activity: "Activity",
+  Productivity: "Productivity",
+  Custom: "Custom",
+} as const;
+
+export interface UpdateMetricBody {
+  name?: string;
+  type?: UpdateMetricBodyType;
+  category?: UpdateMetricBodyCategory;
+  /** @nullable */
+  targetValue?: string | null;
+  /** @nullable */
+  importanceLevel?: number | null;
+  /** @nullable */
+  sortOrder?: number | null;
+  /** @nullable */
+  isActive?: boolean | null;
+}
+
+export interface MetricLog {
+  id: number;
+  date: string;
+  metricId: number;
+  value: string;
+  createdAt: string;
+}
+
+export type MetricLogEntryMetricType =
+  (typeof MetricLogEntryMetricType)[keyof typeof MetricLogEntryMetricType];
+
+export const MetricLogEntryMetricType = {
+  number: "number",
+  checkbox: "checkbox",
+  toggle: "toggle",
+  dropdown: "dropdown",
+  text: "text",
+} as const;
+
+export type MetricLogEntryMetricCategory =
+  (typeof MetricLogEntryMetricCategory)[keyof typeof MetricLogEntryMetricCategory];
+
+export const MetricLogEntryMetricCategory = {
+  Recovery: "Recovery",
+  Nutrition: "Nutrition",
+  Activity: "Activity",
+  Productivity: "Productivity",
+  Custom: "Custom",
+} as const;
+
+export interface MetricLogEntry {
+  id: number;
+  date: string;
+  metricId: number;
+  value: string;
+  createdAt: string;
+  metricName: string;
+  metricType: MetricLogEntryMetricType;
+  metricCategory: MetricLogEntryMetricCategory;
+}
+
+export interface MetricLogInput {
+  metricId: number;
+  value: string;
+}
+
+export interface SaveMetricLogsBody {
+  date: string;
+  entries: MetricLogInput[];
+}
+
 export type ListDailyCheckinsParams = {
   limit?: number;
   offset?: number;
@@ -154,4 +310,8 @@ export type ListDailyCheckinsParams = {
 export type ListWeeklyReviewsParams = {
   limit?: number;
   offset?: number;
+};
+
+export type ListMetricLogsParams = {
+  date: string;
 };
