@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { format } from "date-fns";
 import { Link } from "wouter";
 import {
@@ -16,29 +16,79 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Brain, Sparkles, AlertCircle, Loader2, SlidersHorizontal, Target } from "lucide-react";
 
-const CATEGORY_ICONS: Record<string, string> = {
-  Recovery: "💤",
-  Nutrition: "🥗",
-  Activity: "🏃",
-  Productivity: "🎯",
-  Custom: "⚡",
+const CATEGORY_COLORS: Record<string, string> = {
+  Recovery: "bg-cyan-500/10 text-cyan-400",
+  Health: "bg-red-500/10 text-red-400",
+  Fitness: "bg-orange-500/10 text-orange-400",
+  Nutrition: "bg-lime-500/10 text-lime-400",
+  Work: "bg-blue-500/10 text-blue-400",
+  Study: "bg-indigo-500/10 text-indigo-400",
+  Finance: "bg-emerald-500/10 text-emerald-400",
+  Social: "bg-pink-500/10 text-pink-400",
+  Skill: "bg-violet-500/10 text-violet-400",
+  Art: "bg-fuchsia-500/10 text-fuchsia-400",
+  Morning: "bg-amber-500/10 text-amber-400",
+  Day: "bg-yellow-500/10 text-yellow-400",
+  Evening: "bg-purple-500/10 text-purple-400",
 };
 
-const CATEGORY_ORDER = ["Recovery", "Nutrition", "Activity", "Productivity", "Custom"];
+const PRESET_CATEGORY_ORDER = [
+  "Morning",
+  "Day",
+  "Evening",
+  "Recovery",
+  "Health",
+  "Fitness",
+  "Nutrition",
+  "Work",
+  "Study",
+  "Finance",
+  "Social",
+  "Skill",
+  "Art",
+];
+
+function normalizeCategoryLabel(label: string) {
+  return label
+    .trim()
+    .replace(/\s+/g, " ")
+    .toLowerCase()
+    .split(" ")
+    .map((word) => (word ? word[0].toUpperCase() + word.slice(1) : ""))
+    .join(" ");
+}
+
+function getCategoryColor(category: string) {
+  return CATEGORY_COLORS[category] ?? "bg-gray-500/10 text-gray-300";
+}
+
+function getScaleRange(metric: Metric) {
+  const raw = (metric.targetValue ?? "").trim();
+
+  if (!raw) return { min: 1, max: 5 };
+
+  const rangeMatch = raw.match(/^(\d+)\s*-\s*(\d+)$/);
+  if (rangeMatch) {
+    const min = Number(rangeMatch[1]);
+    const max = Number(rangeMatch[2]);
+    if (!Number.isNaN(min) && !Number.isNaN(max) && min < max) {
+      return { min, max };
+    }
+  }
+
+  const maxOnly = Number(raw);
+  if (!Number.isNaN(maxOnly) && maxOnly > 1) {
+    return { min: 1, max: maxOnly };
+  }
+
+  return { min: 1, max: 5 };
+}
 
 export default function DailyCheckinPage() {
   const { toast } = useToast();
@@ -60,7 +110,6 @@ export default function DailyCheckinPage() {
   const [result, setResult] = useState<DailyCheckin | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Pre-populate with existing log values
   useEffect(() => {
     if (existingLogs && existingLogs.length > 0) {
       const prefilled: Record<number, string> = {};
@@ -70,6 +119,17 @@ export default function DailyCheckinPage() {
       setValues(prefilled);
     }
   }, [existingLogs]);
+
+  const orderedCategories = useMemo(() => {
+    const categories = Array.from(
+      new Set((metrics ?? []).map((m) => normalizeCategoryLabel(m.category))),
+    );
+
+    const preset = PRESET_CATEGORY_ORDER.filter((c) => categories.includes(c));
+    const custom = categories.filter((c) => !PRESET_CATEGORY_ORDER.includes(c)).sort();
+
+    return [...preset, ...custom];
+  }, [metrics]);
 
   if (isLoadingMetrics || isLoadingLogs) {
     return (
@@ -103,10 +163,11 @@ export default function DailyCheckinPage() {
     );
   }
 
-  const grouped = CATEGORY_ORDER.reduce<Record<string, Metric[]>>((acc, cat) => {
+  const grouped = orderedCategories.reduce<Record<string, Metric[]>>((acc, cat) => {
     const items = metrics
-      .filter((m) => m.category === cat)
+      .filter((m) => normalizeCategoryLabel(m.category) === cat)
       .sort((a, b) => a.displayOrder - b.displayOrder || a.id - b.id);
+
     if (items.length > 0) acc[cat] = items;
     return acc;
   }, {});
@@ -117,6 +178,7 @@ export default function DailyCheckinPage() {
 
   function renderInput(m: Metric) {
     const val = values[m.id] ?? "";
+
     switch (m.type) {
       case "number":
         return (
@@ -131,6 +193,7 @@ export default function DailyCheckinPage() {
             {m.unit && <span className="text-sm text-muted-foreground shrink-0">{m.unit}</span>}
           </div>
         );
+
       case "checkbox":
         return (
           <Checkbox
@@ -138,13 +201,7 @@ export default function DailyCheckinPage() {
             onCheckedChange={(checked) => setValue(m.id, String(checked))}
           />
         );
-      case "toggle":
-        return (
-          <Switch
-            checked={val === "true"}
-            onCheckedChange={(checked) => setValue(m.id, String(checked))}
-          />
-        );
+
       case "text":
         return (
           <Textarea
@@ -154,8 +211,10 @@ export default function DailyCheckinPage() {
             className="min-h-[60px] w-full"
           />
         );
+
       case "duration": {
         const [hh, mm] = val ? val.split(":") : ["", ""];
+
         return (
           <div className="flex items-center gap-1">
             <Input
@@ -188,37 +247,31 @@ export default function DailyCheckinPage() {
           </div>
         );
       }
+
       case "scale": {
-        const numVal = val ? Number(val) : 5;
+        const { min, max } = getScaleRange(m);
+        const fallback = Math.round((min + max) / 2);
+        const numVal = val ? Number(val) : fallback;
+
         return (
-          <div className="flex items-center gap-3 w-48">
+          <div className="flex items-center gap-3 w-56">
+            <span className="text-xs text-muted-foreground w-5 text-right">{min}</span>
             <Slider
               value={[numVal]}
               onValueChange={([v]) => setValue(m.id, String(v))}
-              min={1}
-              max={10}
+              min={min}
+              max={max}
               step={1}
               className="flex-1"
             />
-            <span className="text-sm font-medium w-6 text-center tabular-nums">
-              {val || "5"}
+            <span className="text-xs text-muted-foreground w-5">{max}</span>
+            <span className="text-sm font-medium w-8 text-center tabular-nums">
+              {val || String(fallback)}
             </span>
           </div>
         );
       }
-      case "dropdown":
-        return (
-          <Select value={val} onValueChange={(v) => setValue(m.id, v)}>
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="Select..." />
-            </SelectTrigger>
-            <SelectContent>
-              {(m.targetValue ?? "").split(",").map((opt) => opt.trim()).filter(Boolean).map((opt) => (
-                <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        );
+
       default:
         return null;
     }
@@ -226,8 +279,8 @@ export default function DailyCheckinPage() {
 
   async function handleSubmit() {
     setIsSaving(true);
+
     try {
-      // Save metric logs
       const entries = Object.entries(values)
         .filter(([, v]) => v !== "" && v !== undefined)
         .map(([id, value]) => ({ metricId: Number(id), value }));
@@ -236,10 +289,12 @@ export default function DailyCheckinPage() {
         await saveMetricLogs.mutateAsync({
           data: { date: today, entries },
         });
-        queryClient.invalidateQueries({ queryKey: getListMetricLogsQueryKey({ date: today }) });
+
+        queryClient.invalidateQueries({
+          queryKey: getListMetricLogsQueryKey({ date: today }),
+        });
       }
 
-      // Build summary notes from metric values
       const metricSummary = entries
         .map(({ metricId, value }) => {
           const metric = metrics?.find((m) => m.id === metricId);
@@ -250,7 +305,6 @@ export default function DailyCheckinPage() {
 
       const finalNotes = metricSummary || "Daily check-in via dashboard";
 
-      // Map well-known metrics to checkin fields, fallback to 5
       const getNumVal = (name: string) => {
         const m = metrics?.find((x) => x.name.toLowerCase().includes(name));
         if (!m) return 5;
@@ -268,13 +322,17 @@ export default function DailyCheckinPage() {
             healthLevel: getNumVal("health"),
             sleepQuality: getNumVal("sleep"),
             mood: getNumVal("mood"),
-            tasksCompleted: entries
-              .filter(({ metricId }) => metrics?.find((x) => x.id === metricId)?.category === "Productivity")
-              .map(({ metricId, value }) => {
-                const m = metrics?.find((x) => x.id === metricId);
-                return `${m?.name}: ${value}`;
-              })
-              .join(", ") || "Logged via dashboard",
+            tasksCompleted:
+              entries
+                .filter(({ metricId }) => {
+                  const metric = metrics?.find((x) => x.id === metricId);
+                  return normalizeCategoryLabel(metric?.category ?? "") === "Work";
+                })
+                .map(({ metricId, value }) => {
+                  const m = metrics?.find((x) => x.id === metricId);
+                  return `${m?.name}: ${value}`;
+                })
+                .join(", ") || "Logged via dashboard",
             tasksMissed: "",
             habitsCompleted: null,
             symptomsNotes: null,
@@ -293,7 +351,7 @@ export default function DailyCheckinPage() {
           onError: () => {
             toast({ variant: "destructive", title: "Failed to generate AI insights" });
           },
-        }
+        },
       );
     } catch {
       toast({ variant: "destructive", title: "Failed to save logs" });
@@ -309,8 +367,11 @@ export default function DailyCheckinPage() {
           <h1 className="text-3xl font-bold tracking-tight">Daily Dashboard</h1>
           <p className="text-muted-foreground">Today's insights are ready.</p>
         </div>
+
         <div className="flex gap-4 mb-8">
-          <Button onClick={() => setResult(null)} variant="outline">Back to Form</Button>
+          <Button onClick={() => setResult(null)} variant="outline">
+            Back to Form
+          </Button>
         </div>
 
         <Card className="bg-primary/5 border-primary/20">
@@ -355,7 +416,7 @@ export default function DailyCheckinPage() {
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24">
       <div className="flex items-start justify-between">
         <div className="space-y-2">
           <h1 className="text-3xl font-bold tracking-tight">Daily Dashboard</h1>
@@ -376,13 +437,17 @@ export default function DailyCheckinPage() {
           <Card key={category}>
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
-                <span>{CATEGORY_ICONS[category]}</span>
-                {category}
+                <span
+                  className={`px-2 py-0.5 rounded-md text-xs font-medium ${getCategoryColor(category)}`}
+                >
+                  {category}
+                </span>
                 <span className="text-muted-foreground font-normal text-sm ml-1">
                   ({categoryMetrics.length})
                 </span>
               </CardTitle>
             </CardHeader>
+
             <CardContent className="space-y-4">
               {categoryMetrics.map((m) => (
                 <div
@@ -391,12 +456,25 @@ export default function DailyCheckinPage() {
                 >
                   <div className={`flex items-center gap-2 ${m.type === "text" ? "" : "min-w-0"}`}>
                     <Label className="font-medium text-sm">{m.name}</Label>
-                    {m.targetValue && m.type !== "dropdown" && (
-                      <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-muted-foreground">
-                        target: {m.targetValue}{m.unit ? ` ${m.unit}` : ""}
+                    {m.targetValue && m.type !== "scale" && (
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] px-1.5 py-0 text-muted-foreground"
+                      >
+                        target: {m.targetValue}
+                        {m.unit ? ` ${m.unit}` : ""}
+                      </Badge>
+                    )}
+                    {m.type === "scale" && (
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] px-1.5 py-0 text-muted-foreground"
+                      >
+                        scale: {getScaleRange(m).min}-{getScaleRange(m).max}
                       </Badge>
                     )}
                   </div>
+
                   <div className={m.type === "text" ? "w-full" : "shrink-0"}>
                     {renderInput(m)}
                   </div>
@@ -406,10 +484,9 @@ export default function DailyCheckinPage() {
           </Card>
         ))}
 
-        {/* End-of-Day Reflection */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">🔍 End-of-Day Reflection</CardTitle>
+            <CardTitle className="text-base">End-of-Day Reflection</CardTitle>
             <CardDescription>Optional — helps AI give more personal insights</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -422,6 +499,7 @@ export default function DailyCheckinPage() {
                 className="min-h-[60px]"
               />
             </div>
+
             <div className="space-y-1.5">
               <Label className="text-sm font-medium">What felt off?</Label>
               <Textarea
@@ -431,6 +509,7 @@ export default function DailyCheckinPage() {
                 className="min-h-[60px]"
               />
             </div>
+
             <div className="space-y-1.5">
               <Label className="text-sm font-medium">What got in the way?</Label>
               <Textarea
@@ -440,11 +519,14 @@ export default function DailyCheckinPage() {
                 className="min-h-[60px]"
               />
             </div>
+
             <div className="space-y-1.5">
               <Label className="text-sm font-medium">Anything unusual?</Label>
               <Textarea
                 value={reflection.anythingUnusual}
-                onChange={(e) => setReflection((r) => ({ ...r, anythingUnusual: e.target.value }))}
+                onChange={(e) =>
+                  setReflection((r) => ({ ...r, anythingUnusual: e.target.value }))
+                }
                 placeholder="Anything out of the ordinary that affected today..."
                 className="min-h-[60px]"
               />
@@ -459,7 +541,9 @@ export default function DailyCheckinPage() {
         className="w-full md:w-auto"
         size="lg"
       >
-        {(isSaving || createCheckin.isPending) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+        {(isSaving || createCheckin.isPending) && (
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+        )}
         Save & Analyze
       </Button>
     </div>
