@@ -98,7 +98,7 @@ const TYPE_DESCRIPTIONS: Record<string, string> = {
   checkbox: "Yes/No completed",
   text: "Free text entry",
   duration: "Time duration (HH:MM format)",
-  scale: "Scale rating 1–10",
+  scale: "Scale rating (scale rating 1-5)",
 };
 
 type MetricForm = {
