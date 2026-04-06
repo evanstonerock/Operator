@@ -93,22 +93,6 @@ const CATEGORY_COLORS: Record<string, string> = {
   Evening: "bg-purple-500/10 text-purple-400",
 };
 
-const CATEGORY_ICONS: Record<string, string> = {
-  Recovery: "💤",
-  Health: "❤️",
-  Fitness: "💪",
-  Nutrition: "🥗",
-  Work: "💼",
-  Study: "📚",
-  Finance: "💰",
-  Social: "🫂",
-  Skill: "🛠️",
-  Art: "🎨",
-  Morning: "🌅",
-  Day: "☀️",
-  Evening: "🌙",
-};
-
 const TYPE_DESCRIPTIONS: Record<string, string> = {
   number: "Numeric value (e.g. 8 hours, 2000 calories)",
   checkbox: "Yes/No completed",
@@ -137,12 +121,18 @@ const EMPTY_FORM: MetricForm = {
   aiContext: "",
 };
 
-function getCategoryColor(category: string) {
-  return CATEGORY_COLORS[category] ?? "bg-gray-500/10 text-gray-300";
+function normalizeCategoryLabel(label: string) {
+  return label
+    .trim()
+    .replace(/\s+/g, " ")
+    .toLowerCase()
+    .split(" ")
+    .map((word) => (word ? word[0].toUpperCase() + word.slice(1) : ""))
+    .join(" ");
 }
 
-function getCategoryIcon(category: string) {
-  return CATEGORY_ICONS[category] ?? "🏷️";
+function getCategoryColor(category: string) {
+  return CATEGORY_COLORS[category] ?? "bg-gray-500/10 text-gray-300";
 }
 
 export default function CustomizeDashboard() {
@@ -163,9 +153,15 @@ export default function CustomizeDashboard() {
     queryClient.invalidateQueries({ queryKey: getListMetricsQueryKey() });
 
   const orderedCategories = useMemo(() => {
-    const metricCategories = Array.from(new Set((metrics ?? []).map((m) => m.category)));
+    const metricCategories = Array.from(
+      new Set((metrics ?? []).map((m) => normalizeCategoryLabel(m.category))),
+    );
+
     const preset = [...PRESET_CATEGORIES].filter((c) => metricCategories.includes(c));
-    const custom = metricCategories.filter((c) => !PRESET_CATEGORIES.includes(c as never)).sort();
+    const custom = metricCategories
+      .filter((c) => !PRESET_CATEGORIES.includes(c as never))
+      .sort();
+
     return [...preset, ...custom];
   }, [metrics]);
 
@@ -176,14 +172,15 @@ export default function CustomizeDashboard() {
   }
 
   function openEdit(m: Metric) {
-    const isPreset = PRESET_CATEGORIES.includes(m.category as never);
+    const normalized = normalizeCategoryLabel(m.category);
+    const isPreset = PRESET_CATEGORIES.includes(normalized as never);
 
     setEditingMetric(m);
     setForm({
       name: m.name,
       type: m.type,
-      category: isPreset ? m.category : "Custom",
-      customCategory: isPreset ? "" : m.category,
+      category: isPreset ? normalized : "Custom",
+      customCategory: isPreset ? "" : normalized,
       unit: m.unit ?? "",
       targetValue: m.targetValue ?? "",
       aiContext: m.aiContext ?? "",
@@ -192,8 +189,8 @@ export default function CustomizeDashboard() {
   }
 
   function getFinalCategory() {
-    if (form.category !== "Custom") return form.category;
-    return form.customCategory.trim();
+    const raw = form.category === "Custom" ? form.customCategory : form.category;
+    return normalizeCategoryLabel(raw);
   }
 
   function handleSave() {
@@ -266,7 +263,7 @@ export default function CustomizeDashboard() {
 
   async function moveItem(category: string, currentIndex: number, direction: "up" | "down") {
     const categoryItems = (metrics ?? [])
-      .filter((m) => m.category === category)
+      .filter((m) => normalizeCategoryLabel(m.category) === category)
       .sort((a, b) => a.displayOrder - b.displayOrder || a.id - b.id);
 
     const targetIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
@@ -291,7 +288,7 @@ export default function CustomizeDashboard() {
 
   const grouped = orderedCategories.reduce<Record<string, Metric[]>>((acc, cat) => {
     acc[cat] = (metrics ?? [])
-      .filter((m) => m.category === cat)
+      .filter((m) => normalizeCategoryLabel(m.category) === cat)
       .sort((a, b) => a.displayOrder - b.displayOrder || a.id - b.id);
     return acc;
   }, {});
@@ -344,8 +341,9 @@ export default function CustomizeDashboard() {
               <Card key={cat}>
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base flex items-center gap-2">
-                    <span>{getCategoryIcon(cat)}</span>
-                    <span className={`px-2 py-0.5 rounded-md text-xs font-medium ${getCategoryColor(cat)}`}>
+                    <span
+                      className={`px-2 py-0.5 rounded-md text-xs font-medium ${getCategoryColor(cat)}`}
+                    >
                       {cat}
                     </span>
                     <span className="text-muted-foreground font-normal text-sm">
@@ -494,10 +492,10 @@ export default function CustomizeDashboard() {
                   <SelectContent>
                     {PRESET_CATEGORIES.map((c) => (
                       <SelectItem key={c} value={c}>
-                        {getCategoryIcon(c)} {c}
+                        {c}
                       </SelectItem>
                     ))}
-                    <SelectItem value="Custom">🏷️ Custom</SelectItem>
+                    <SelectItem value="Custom">Custom</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
