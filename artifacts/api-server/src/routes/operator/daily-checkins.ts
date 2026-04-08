@@ -1,9 +1,9 @@
 import { Router } from "express";
 import { db, dailyCheckinsTable, metricLogsTable, metricsTable } from "@workspace/db";
 import { desc, eq, and } from "drizzle-orm";
-import { anthropic } from "@workspace/integrations-anthropic-ai";
-import { openai } from "@workspace/integrations-openai-ai-server";
 import { CreateDailyCheckinBody } from "@workspace/api-zod";
+import Anthropic from "@anthropic-ai/sdk";
+import OpenAI from "openai";
 
 const router = Router();
 
@@ -51,149 +51,127 @@ router.post("/", async (req, res) => {
       reflectionAnythingUnusual,
     } = parsed.data;
 
-    // Fetch ALL active trackable definitions + today's logged values
-    let metricLogsContext = "";
-    let trackableDefinitions = "";
-    try {
-      // All active trackables (for full definitions context)
-      const allMetrics = await db
-        .select()
-        .from(metricsTable)
-        .where(eq(metricsTable.isActive, true))
-        .orderBy(metricsTable.displayOrder, metricsTable.sortOrder, metricsTable.id);
+    const daySummary = await buildStructuredDaySummary({
+      date,
+      notes,
+      energyLevel,
+      focusLevel,
+      healthLevel,
+      sleepQuality,
+      mood,
+      tasksCompleted,
+      tasksMissed,
+      habitsCompleted,
+      symptomsNotes,
+      reflectionFeltGood,
+      reflectionFeltOff,
+      reflectionGotInWay,
+      reflectionAnythingUnusual,
+    });
 
-      // Logged values for today
-      const logs = await db
-        .select({
-          value: metricLogsTable.value,
-          metricId: metricLogsTable.metricId,
-        })
-        .from(metricLogsTable)
-        .where(and(eq(metricLogsTable.date, date)));
-
-      const logMap = new Map(logs.map(l => [l.metricId, l.value]));
-
-      if (allMetrics.length > 0) {
-        // Trackable definitions for all configured trackables
-        trackableDefinitions = "\nAll Configured Trackables:\n" + allMetrics.map(m => {
-          const parts = [`  ${m.name} (${m.type}, ${m.category})`];
-          if (m.unit) parts.push(`unit: ${m.unit}`);
-          if (m.targetValue) parts.push(`target: ${m.targetValue}`);
-          if (m.aiContext) parts.push(`context: ${m.aiContext}`);
-          return parts.join(", ");
-        }).join("\n");
-
-        // Logged values for metrics that have entries today
-        const loggedMetrics = allMetrics.filter(m => logMap.has(m.id));
-        if (loggedMetrics.length > 0) {
-          metricLogsContext = "\nLogged Values Today:\n" + loggedMetrics.map(m => {
-            const value = logMap.get(m.id) ?? "";
-            const unit = m.unit ? ` ${m.unit}` : "";
-            const target = m.targetValue ? ` (target: ${m.targetValue}${unit})` : "";
-            return `  ${m.name} [${m.category}]: ${value}${unit}${target}`;
-          }).join("\n");
-        }
-      }
-    } catch (_e) {
-      // non-fatal, continue without metric logs
-    }
-
-    // Build the end-of-day reflection context
-    const reflectionContext = [
-      reflectionFeltGood ? `What felt good: ${reflectionFeltGood}` : "",
-      reflectionFeltOff ? `What felt off: ${reflectionFeltOff}` : "",
-      reflectionGotInWay ? `What got in the way: ${reflectionGotInWay}` : "",
-      reflectionAnythingUnusual ? `Anything unusual: ${reflectionAnythingUnusual}` : "",
-    ].filter(Boolean).join("\n");
-
-    // Build the user context string for AI prompts
-    const userContext = `
-Date: ${date}
-${notes ? `Notes: ${notes}` : ""}${metricLogsContext}${trackableDefinitions ? `\n${trackableDefinitions}` : ""}
-${reflectionContext ? `\nEnd-of-Day Reflection:\n${reflectionContext}` : ""}
-    `.trim();
-
-    // Step 1: Claude reflection using trackable definitions + logged values + reflection
+    // Step 1: Claude reflection using the structured day summary
     let claudeReflection = "";
     try {
-      const claudeMsg = await anthropic.messages.create({
+      const anthropicClient = getAnthropicClient();
+      if (!anthropicClient) {
+        throw new Error("ANTHROPIC_API_KEY is not configured");
+      }
+
+      const claudeMsg = await anthropicClient.messages.create({
         model: "claude-sonnet-4-6",
-        max_tokens: 8192,
+        max_tokens: 2048,
         messages: [
           {
             role: "user",
-            content: `You are a thoughtful personal life coach helping someone understand their day deeply. The user has defined custom trackables with specific context about what each metric means to them. Use this context to provide highly personalized analysis.
+            content: `You are a thoughtful personal coach reviewing one specific day. Use the structured summary below to produce a deeper reflection that is specific, honest, and useful.
 
-${userContext}
+${daySummary.promptContext}
 
-Analyze the logged values in light of each trackable's defined context (the "context" field explains what that metric means to the user). Identify patterns, cause-and-effect relationships, and what the data tells us about today.
+Write plain text with short readable paragraphs. Cover:
+1. What today’s data and reflections actually say
+2. The most meaningful patterns or tensions across energy, focus, mood, health, sleep, tasks, and tracked metrics
+3. Where the user’s subjective reflection matches or conflicts with the metrics
+4. The one or two most important insights this person should carry forward
 
-Provide a structured reflection in plain text (no markdown, no bullet points, just clear readable paragraphs) covering:
-1. What the data actually shows — specific observations tied to the logged values and their targets
-2. Patterns or connections between different tracked areas (e.g. how sleep affected energy, how activity affected mood)
-3. What the end-of-day reflection reveals about the user's experience vs. what the numbers show
-4. One key insight from today that is specific to this person's tracking setup
-
-Be direct, analytical, and honest. Reference specific metrics and their values. Avoid generic advice.`,
+Reference concrete values, targets, and reflection details where possible. Avoid generic self-help language.`,
           },
         ],
       });
-      const block = claudeMsg.content[0];
-      claudeReflection = block.type === "text" ? block.text : "";
+      claudeReflection = claudeMsg.content
+        .filter((block) => block.type === "text")
+        .map((block) => block.text.trim())
+        .join("\n\n")
+        .trim();
+
+      if (!claudeReflection) {
+        throw new Error("Claude returned an empty reflection");
+      }
     } catch (err) {
       req.log.error({ err }, "Claude reflection failed");
-      claudeReflection = "Unable to generate reflection at this time.";
+      claudeReflection = buildReflectionFallback(daySummary.summaryText);
     }
 
-    // Step 2: OpenAI tomorrow plan (receives original data + Claude's reflection)
+    // Step 2: OpenAI tomorrow plan
     let openaiPlan = "";
     try {
-      const planResponse = await openai.chat.completions.create({
+      const openaiClient = getOpenAIClient();
+      if (!openaiClient) {
+        throw new Error("OPENAI_API_KEY is not configured");
+      }
+
+      const planResponse = await openaiClient.chat.completions.create({
         model: "gpt-5.2",
-        max_completion_tokens: 8192,
+        max_completion_tokens: 2048,
         messages: [
           {
             role: "user",
-            content: `You are a practical life planner. Based on this person's custom-tracked daily data and the coach's reflection, create a clear, actionable plan for tomorrow tailored to what they actually track.
+            content: `You are a practical planner turning today’s results into a better tomorrow. Build a simple, concrete plan from the day summary and reflection below.
 
-DAILY DATA:
-${userContext}
+DAY SUMMARY:
+${daySummary.promptContext}
 
-COACH'S REFLECTION:
+DEEPER REFLECTION:
 ${claudeReflection}
 
-Create a structured tomorrow plan with exactly these sections (plain text, no markdown):
+Respond in plain text with exactly these sections:
 
 TOP PRIORITY:
-[One clear sentence about the single most important thing for tomorrow, grounded in today's data]
+[One sentence]
 
 3 KEY ACTIONS:
-1. [Specific actionable task tied to their tracking areas]
-2. [Specific actionable task tied to their tracking areas]
-3. [Specific actionable task tied to their tracking areas]
+1. [Specific action]
+2. [Specific action]
+3. [Specific action]
 
 SUGGESTED FOCUS AREAS:
-[Based on their trackables, which areas need the most attention tomorrow and why]
+[Short paragraph]
 
 ONE THING TO AVOID:
-[Based on today's data and patterns, one specific behavior or pattern to avoid tomorrow]
+[One sentence]
 
 IDEAL APPROACH FOR TOMORROW:
-[A short sentence on the mindset or approach they should bring, based on their specific tracked patterns]`,
+[One sentence]
+
+Make the actions realistic and tied to the user’s actual metrics, reflections, and task patterns.`,
           },
         ],
       });
-      openaiPlan = planResponse.choices[0]?.message?.content ?? "";
+      openaiPlan = planResponse.choices[0]?.message?.content?.trim() ?? "";
+
+      if (!openaiPlan) {
+        throw new Error("OpenAI returned an empty plan");
+      }
     } catch (err) {
       req.log.error({ err }, "OpenAI planning failed");
-      openaiPlan = "Unable to generate plan at this time.";
+      openaiPlan = buildPlanFallback(daySummary.summaryText);
     }
 
     // Step 3: Combined advice
-    let combinedAdvice = "";
-    if (claudeReflection && openaiPlan) {
-      combinedAdvice = buildCombinedDailyAdvice(claudeReflection, openaiPlan, energyLevel, focusLevel, mood);
-    }
+    const combinedAdvice = buildCombinedDailyAdvice({
+      summaryText: daySummary.summaryText,
+      claudeReflection,
+      openaiPlan,
+    });
 
     // Save to DB
     const [created] = await db
@@ -284,17 +262,201 @@ function formatCheckin(c: typeof dailyCheckinsTable.$inferSelect) {
   };
 }
 
-function buildCombinedDailyAdvice(claudeReflection: string, openaiPlan: string, energy: number, focus: number, mood: number): string {
-  const claudeSentences = claudeReflection.split(". ").filter(s => s.length > 30);
-  const keyInsight = claudeSentences.length > 0 ? claudeSentences[0].trim() : claudeReflection.slice(0, 200);
-
+function buildCombinedDailyAdvice({
+  summaryText,
+  claudeReflection,
+  openaiPlan,
+}: {
+  summaryText: string;
+  claudeReflection: string;
+  openaiPlan: string;
+}): string {
+  const summarySignal = summaryText
+    .split("\n")
+    .find((line) => line.startsWith("Energy:") || line.startsWith("Focus:") || line.startsWith("Mood:"));
+  const reflectionSnippet = claudeReflection.split(/\.\s+/).find((sentence) => sentence.length > 40)?.trim()
+    ?? claudeReflection.slice(0, 220).trim();
   const topPriorityMatch = openaiPlan.match(/TOP PRIORITY:\s*\n?(.*?)(?:\n|$)/i);
-  const topPriority = topPriorityMatch ? topPriorityMatch[1].trim() : "";
+  const topPriority = topPriorityMatch?.[1]?.trim();
 
-  const avgScore = Math.round((energy + focus + mood) / 3);
-  const dayQuality = avgScore >= 7 ? "strong" : avgScore >= 5 ? "moderate" : "challenging";
-
-  return `Today was a ${dayQuality} day (avg score: ${avgScore}/10). ${keyInsight}. ${topPriority ? `For tomorrow, the most important thing is: ${topPriority}` : ""} This plan is built on your actual data — not generic advice.`;
+  return [
+    summarySignal ? `Day signal: ${summarySignal}` : null,
+    reflectionSnippet ? `Reflection: ${reflectionSnippet}` : null,
+    topPriority ? `Tomorrow's priority: ${topPriority}` : null,
+  ].filter(Boolean).join(" ");
 }
 
 export default router;
+
+type StructuredDaySummaryInput = {
+  date: string;
+  notes: string;
+  energyLevel: number;
+  focusLevel: number;
+  healthLevel: number;
+  sleepQuality: number;
+  mood: number;
+  tasksCompleted: string;
+  tasksMissed: string;
+  habitsCompleted?: string | null;
+  symptomsNotes?: string | null;
+  reflectionFeltGood?: string | null;
+  reflectionFeltOff?: string | null;
+  reflectionGotInWay?: string | null;
+  reflectionAnythingUnusual?: string | null;
+};
+
+type StructuredMetric = typeof metricsTable.$inferSelect & {
+  loggedValue: string | null;
+};
+
+type StructuredDaySummary = {
+  summaryText: string;
+  promptContext: string;
+};
+
+let openaiClient: OpenAI | null | undefined;
+let anthropicClient: Anthropic | null | undefined;
+
+async function buildStructuredDaySummary(input: StructuredDaySummaryInput): Promise<StructuredDaySummary> {
+  let metrics: StructuredMetric[] = [];
+
+  try {
+    const [definitions, logs] = await Promise.all([
+      db
+        .select()
+        .from(metricsTable)
+        .where(eq(metricsTable.isActive, true))
+        .orderBy(metricsTable.displayOrder, metricsTable.sortOrder, metricsTable.id),
+      db
+        .select({
+          metricId: metricLogsTable.metricId,
+          value: metricLogsTable.value,
+        })
+        .from(metricLogsTable)
+        .where(and(eq(metricLogsTable.date, input.date))),
+    ]);
+
+    const logMap = new Map(logs.map((log) => [log.metricId, log.value]));
+    metrics = definitions.map((metric) => ({
+      ...metric,
+      loggedValue: logMap.get(metric.id) ?? null,
+    }));
+  } catch {
+    metrics = [];
+  }
+
+  const reflectionItems = [
+    input.reflectionFeltGood ? `Felt good: ${input.reflectionFeltGood}` : null,
+    input.reflectionFeltOff ? `Felt off: ${input.reflectionFeltOff}` : null,
+    input.reflectionGotInWay ? `Got in the way: ${input.reflectionGotInWay}` : null,
+    input.reflectionAnythingUnusual ? `Anything unusual: ${input.reflectionAnythingUnusual}` : null,
+  ].filter(Boolean) as string[];
+
+  const metricDefinitionLines = metrics.length > 0
+    ? metrics.map((metric) => {
+        const parts = [
+          `${metric.name} [${metric.category}/${metric.type}]`,
+          metric.unit ? `unit=${metric.unit}` : null,
+          metric.targetValue ? `target=${metric.targetValue}` : null,
+          metric.aiContext ? `context=${metric.aiContext}` : null,
+        ].filter(Boolean);
+        return `- ${parts.join(", ")}`;
+      }).join("\n")
+    : "- No active metric definitions found";
+
+  const loggedMetricLines = metrics.filter((metric) => metric.loggedValue != null).length > 0
+    ? metrics
+        .filter((metric) => metric.loggedValue != null)
+        .map((metric) => {
+          const targetText = metric.targetValue ? `, target=${metric.targetValue}` : "";
+          const unitText = metric.unit ? ` ${metric.unit}` : "";
+          return `- ${metric.name}: ${metric.loggedValue}${unitText}${targetText}`;
+        })
+        .join("\n")
+    : "- No metric logs found for this date";
+
+  const scoreLines = [
+    `Energy: ${input.energyLevel}/10`,
+    `Focus: ${input.focusLevel}/10`,
+    `Health: ${input.healthLevel}/10`,
+    `Sleep quality: ${input.sleepQuality}/10`,
+    `Mood: ${input.mood}/10`,
+  ].join("\n");
+
+  const summarySections = [
+    `DATE\n${input.date}`,
+    `CORE SCORES\n${scoreLines}`,
+    `TASKS\nCompleted: ${input.tasksCompleted}\nMissed: ${input.tasksMissed}`,
+    `NOTES\n${input.notes}`,
+    input.habitsCompleted ? `HABITS\n${input.habitsCompleted}` : null,
+    input.symptomsNotes ? `SYMPTOMS\n${input.symptomsNotes}` : null,
+    `METRIC DEFINITIONS\n${metricDefinitionLines}`,
+    `TODAY'S METRIC LOGS\n${loggedMetricLines}`,
+    reflectionItems.length > 0 ? `REFLECTION INPUTS\n${reflectionItems.join("\n")}` : "REFLECTION INPUTS\n- None provided",
+  ].filter(Boolean);
+
+  const summaryText = summarySections.join("\n\n");
+
+  return {
+    summaryText,
+    promptContext: `${summaryText}\n\nDAY TAKEAWAY\nThis summary combines the user's manual check-in, today's metric logs, active metric definitions, and reflection inputs.`,
+  };
+}
+
+function getOpenAIClient(): OpenAI | null {
+  if (openaiClient !== undefined) {
+    return openaiClient;
+  }
+
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) {
+    openaiClient = null;
+    return openaiClient;
+  }
+
+  openaiClient = new OpenAI({ apiKey });
+  return openaiClient;
+}
+
+function getAnthropicClient(): Anthropic | null {
+  if (anthropicClient !== undefined) {
+    return anthropicClient;
+  }
+
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    anthropicClient = null;
+    return anthropicClient;
+  }
+
+  anthropicClient = new Anthropic({ apiKey });
+  return anthropicClient;
+}
+
+function buildReflectionFallback(summaryText: string): string {
+  const compactSummary = summaryText.split("\n").slice(0, 12).join(" ").trim();
+  return `Claude reflection unavailable. The day summary still shows the main signals: ${compactSummary}`;
+}
+
+function buildPlanFallback(summaryText: string): string {
+  const shortSummary = summaryText.split("\n").slice(0, 10).join(" ").trim();
+  return [
+    "TOP PRIORITY:",
+    "Review today’s strongest and weakest signals before starting tomorrow.",
+    "",
+    "3 KEY ACTIONS:",
+    "1. Repeat the behaviors that supported your better scores and completed tasks.",
+    "2. Reduce the main friction point mentioned in your reflection before it compounds tomorrow.",
+    "3. Check your most important metrics early so you can adjust sooner.",
+    "",
+    "SUGGESTED FOCUS AREAS:",
+    `Base tomorrow on this summary: ${shortSummary}`,
+    "",
+    "ONE THING TO AVOID:",
+    "Avoid carrying today’s missed-task pattern forward without adjusting the plan.",
+    "",
+    "IDEAL APPROACH FOR TOMORROW:",
+    "Keep tomorrow simple, measurable, and grounded in your actual data.",
+  ].join("\n");
+}
