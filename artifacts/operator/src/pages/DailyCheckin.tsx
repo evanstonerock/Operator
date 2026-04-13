@@ -23,35 +23,33 @@ import { Slider } from "@/components/ui/slider";
 import { Brain, Sparkles, AlertCircle, Loader2, SlidersHorizontal, Target } from "lucide-react";
 
 const CATEGORY_COLORS: Record<string, string> = {
-  Recovery: "bg-cyan-500/10 text-cyan-400",
-  Health: "bg-red-500/10 text-red-400",
-  Fitness: "bg-orange-500/10 text-orange-400",
-  Nutrition: "bg-lime-500/10 text-lime-400",
-  Work: "bg-blue-500/10 text-blue-400",
-  Study: "bg-indigo-500/10 text-indigo-400",
-  Finance: "bg-emerald-500/10 text-emerald-400",
-  Social: "bg-pink-500/10 text-pink-400",
-  Skill: "bg-violet-500/10 text-violet-400",
-  Art: "bg-fuchsia-500/10 text-fuchsia-400",
-  Morning: "bg-amber-500/10 text-amber-400",
-  Day: "bg-yellow-500/10 text-yellow-400",
-  Evening: "bg-purple-500/10 text-purple-400",
+  Personal: "bg-slate-500/10 text-slate-300",
+  Physical: "bg-red-500/10 text-red-400",
+  Emotional: "bg-rose-500/10 text-rose-400",
+  Relational: "bg-pink-500/10 text-pink-400",
+  Intellectual: "bg-indigo-500/10 text-indigo-400",
+  Spiritual: "bg-violet-500/10 text-violet-400",
+  Moral: "bg-amber-500/10 text-amber-400",
+  Professional: "bg-blue-500/10 text-blue-400",
+  Cultural: "bg-fuchsia-500/10 text-fuchsia-400",
+  Recreational: "bg-lime-500/10 text-lime-400",
+  Financial: "bg-emerald-500/10 text-emerald-400",
+  Sexual: "bg-orange-500/10 text-orange-400",
 };
 
 const PRESET_CATEGORY_ORDER = [
-  "Morning",
-  "Day",
-  "Evening",
-  "Recovery",
-  "Health",
-  "Fitness",
-  "Nutrition",
-  "Work",
-  "Study",
-  "Finance",
-  "Social",
-  "Skill",
-  "Art",
+  "Personal",
+  "Physical",
+  "Emotional",
+  "Relational",
+  "Intellectual",
+  "Spiritual",
+  "Moral",
+  "Professional",
+  "Cultural",
+  "Recreational",
+  "Financial",
+  "Sexual",
 ];
 
 function normalizeCategoryLabel(label: string) {
@@ -326,7 +324,7 @@ export default function DailyCheckinPage() {
               entries
                 .filter(({ metricId }) => {
                   const metric = metrics?.find((x) => x.id === metricId);
-                  return normalizeCategoryLabel(metric?.category ?? "") === "Work";
+                  return normalizeCategoryLabel(metric?.category ?? "") === "Professional";
                 })
                 .map(({ metricId, value }) => {
                   const m = metrics?.find((x) => x.id === metricId);

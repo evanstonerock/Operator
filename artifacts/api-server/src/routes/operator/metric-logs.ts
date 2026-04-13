@@ -1,9 +1,56 @@
 import { Router } from "express";
 import { db, metricLogsTable, metricsTable } from "@workspace/db";
-import { eq, and, inArray } from "drizzle-orm";
+import { eq, and, inArray, gte, lte, asc } from "drizzle-orm";
 import { sql } from "drizzle-orm";
 
 const router = Router();
+
+// GET /api/metric-logs/history?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD&limit=5000
+router.get("/history", async (req, res) => {
+  const startDate = req.query.startDate as string | undefined;
+  const endDate = req.query.endDate as string | undefined;
+  const limit = Math.min(Number(req.query.limit) || 5000, 10000);
+
+  try {
+    const whereClause =
+      startDate && endDate
+        ? and(gte(metricLogsTable.date, startDate), lte(metricLogsTable.date, endDate))
+        : startDate
+          ? gte(metricLogsTable.date, startDate)
+          : endDate
+            ? lte(metricLogsTable.date, endDate)
+            : undefined;
+
+    const logs = await db
+      .select({
+        id: metricLogsTable.id,
+        date: metricLogsTable.date,
+        metricId: metricLogsTable.metricId,
+        value: metricLogsTable.value,
+        createdAt: metricLogsTable.createdAt,
+        metricName: metricsTable.name,
+        metricType: metricsTable.type,
+        metricCategory: metricsTable.category,
+        metricUnit: metricsTable.unit,
+        metricAiContext: metricsTable.aiContext,
+      })
+      .from(metricLogsTable)
+      .innerJoin(metricsTable, eq(metricLogsTable.metricId, metricsTable.id))
+      .where(whereClause)
+      .orderBy(asc(metricLogsTable.date), asc(metricLogsTable.metricId))
+      .limit(limit);
+
+    res.json(
+      logs.map((log) => ({
+        ...log,
+        createdAt: log.createdAt.toISOString(),
+      })),
+    );
+  } catch (err) {
+    req.log.error({ err }, "Failed to fetch metric log history");
+    res.status(500).json({ error: "Failed to fetch metric log history" });
+  }
+});
 
 // GET /api/metric-logs?date=YYYY-MM-DD
 router.get("/", async (req, res) => {

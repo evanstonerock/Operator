@@ -1383,7 +1383,7 @@ components:
           enum: [number, checkbox, toggle, dropdown, text, duration, scale]
         category:
           type: string
-          enum: [Recovery, Nutrition, Activity, Productivity, Custom]
+          enum: [Personal, Physical, Emotional, Relational, Intellectual, Spiritual, Moral, Professional, Cultural, Recreational, Financial, Sexual, Custom]
         unit:
           type: ["string", "null"]
         targetValue:
@@ -1424,7 +1424,7 @@ components:
           enum: [number, checkbox, toggle, dropdown, text, duration, scale]
         category:
           type: string
-          enum: [Recovery, Nutrition, Activity, Productivity, Custom]
+          enum: [Personal, Physical, Emotional, Relational, Intellectual, Spiritual, Moral, Professional, Cultural, Recreational, Financial, Sexual, Custom]
         unit:
           type: ["string", "null"]
         targetValue:
@@ -1452,7 +1452,7 @@ components:
           enum: [number, checkbox, toggle, dropdown, text, duration, scale]
         category:
           type: string
-          enum: [Recovery, Nutrition, Activity, Productivity, Custom]
+          enum: [Personal, Physical, Emotional, Relational, Intellectual, Spiritual, Moral, Professional, Cultural, Recreational, Financial, Sexual, Custom]
         unit:
           type: ["string", "null"]
         targetValue:
@@ -1508,7 +1508,7 @@ components:
           enum: [number, checkbox, toggle, dropdown, text, duration, scale]
         metricCategory:
           type: string
-          enum: [Recovery, Nutrition, Activity, Productivity, Custom]
+          enum: [Personal, Physical, Emotional, Relational, Intellectual, Spiritual, Moral, Professional, Cultural, Recreational, Financial, Sexual, Custom]
         metricUnit:
           type: ["string", "null"]
         metricAiContext:

@@ -10,7 +10,7 @@ const router = Router();
 // GET /api/daily-checkins - list all check-ins
 router.get("/", async (req, res) => {
   try {
-    const limit = Math.min(Number(req.query.limit) || 50, 100);
+    const limit = Math.min(Number(req.query.limit) || 50, 365);
     const offset = Number(req.query.offset) || 0;
     const checkins = await db
       .select()

@@ -328,10 +328,18 @@ export type MetricCategory =
   (typeof MetricCategory)[keyof typeof MetricCategory];
 
 export const MetricCategory = {
-  Recovery: "Recovery",
-  Nutrition: "Nutrition",
-  Activity: "Activity",
-  Productivity: "Productivity",
+  Personal: "Personal",
+  Physical: "Physical",
+  Emotional: "Emotional",
+  Relational: "Relational",
+  Intellectual: "Intellectual",
+  Spiritual: "Spiritual",
+  Moral: "Moral",
+  Professional: "Professional",
+  Cultural: "Cultural",
+  Recreational: "Recreational",
+  Financial: "Financial",
+  Sexual: "Sexual",
   Custom: "Custom",
 } as const;
 
@@ -371,10 +379,18 @@ export type CreateMetricBodyCategory =
   (typeof CreateMetricBodyCategory)[keyof typeof CreateMetricBodyCategory];
 
 export const CreateMetricBodyCategory = {
-  Recovery: "Recovery",
-  Nutrition: "Nutrition",
-  Activity: "Activity",
-  Productivity: "Productivity",
+  Personal: "Personal",
+  Physical: "Physical",
+  Emotional: "Emotional",
+  Relational: "Relational",
+  Intellectual: "Intellectual",
+  Spiritual: "Spiritual",
+  Moral: "Moral",
+  Professional: "Professional",
+  Cultural: "Cultural",
+  Recreational: "Recreational",
+  Financial: "Financial",
+  Sexual: "Sexual",
   Custom: "Custom",
 } as const;
 
@@ -413,10 +429,18 @@ export type UpdateMetricBodyCategory =
   (typeof UpdateMetricBodyCategory)[keyof typeof UpdateMetricBodyCategory];
 
 export const UpdateMetricBodyCategory = {
-  Recovery: "Recovery",
-  Nutrition: "Nutrition",
-  Activity: "Activity",
-  Productivity: "Productivity",
+  Personal: "Personal",
+  Physical: "Physical",
+  Emotional: "Emotional",
+  Relational: "Relational",
+  Intellectual: "Intellectual",
+  Spiritual: "Spiritual",
+  Moral: "Moral",
+  Professional: "Professional",
+  Cultural: "Cultural",
+  Recreational: "Recreational",
+  Financial: "Financial",
+  Sexual: "Sexual",
   Custom: "Custom",
 } as const;
 
@@ -465,10 +489,18 @@ export type MetricLogEntryMetricCategory =
   (typeof MetricLogEntryMetricCategory)[keyof typeof MetricLogEntryMetricCategory];
 
 export const MetricLogEntryMetricCategory = {
-  Recovery: "Recovery",
-  Nutrition: "Nutrition",
-  Activity: "Activity",
-  Productivity: "Productivity",
+  Personal: "Personal",
+  Physical: "Physical",
+  Emotional: "Emotional",
+  Relational: "Relational",
+  Intellectual: "Intellectual",
+  Spiritual: "Spiritual",
+  Moral: "Moral",
+  Professional: "Professional",
+  Cultural: "Cultural",
+  Recreational: "Recreational",
+  Financial: "Financial",
+  Sexual: "Sexual",
   Custom: "Custom",
 } as const;
 
